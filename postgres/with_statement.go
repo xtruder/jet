@@ -8,8 +8,11 @@ type CommonTableExpression struct {
 	jet.CommonTableExpression
 }
 
+// CommonTableExpressionDefinition contains definition for CTE.
+type CommonTableExpressionDefinition = jet.CommonTableExpressionDefinition
+
 // WITH function creates new WITH statement from list of common table expressions
-func WITH(cte ...jet.CommonTableExpressionDefinition) func(statement jet.Statement) Statement {
+func WITH(cte ...CommonTableExpressionDefinition) func(statement jet.Statement) Statement {
 	return jet.WITH(Dialect, cte...)
 }
 
