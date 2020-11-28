@@ -1,12 +1,15 @@
 package postgres
 
 import (
-	"github.com/go-jet/jet/v2/internal/jet"
 	"math"
+
+	"github.com/go-jet/jet/v2/internal/jet"
 )
 
 // RowLock is interface for SELECT statement row lock types
 type RowLock = jet.RowLock
+
+type OrderByClause = jet.OrderByClause
 
 // Row lock types
 var (
@@ -49,7 +52,7 @@ type SelectStatement interface {
 	GROUP_BY(groupByClauses ...jet.GroupByClause) SelectStatement
 	HAVING(boolExpression BoolExpression) SelectStatement
 	WINDOW(name string) windowExpand
-	ORDER_BY(orderByClauses ...jet.OrderByClause) SelectStatement
+	ORDER_BY(orderByClauses ...OrderByClause) SelectStatement
 	LIMIT(limit int64) SelectStatement
 	OFFSET(offset int64) SelectStatement
 	FOR(lock RowLock) SelectStatement
@@ -131,7 +134,7 @@ func (s *selectStatementImpl) WINDOW(name string) windowExpand {
 	return windowExpand{selectStatement: s}
 }
 
-func (s *selectStatementImpl) ORDER_BY(orderByClauses ...jet.OrderByClause) SelectStatement {
+func (s *selectStatementImpl) ORDER_BY(orderByClauses ...OrderByClause) SelectStatement {
 	s.OrderBy.List = orderByClauses
 	return s
 }
