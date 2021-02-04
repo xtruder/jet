@@ -1,0 +1,90 @@
+version: '3'
+services:
+  dev:
+    build:
+      context: .
+      dockerfile: ./.devcontainer/Dockerfile
+      args:
+        USER_UID: ${USER_UID:-1000}
+        USER_GID: ${USER_GID:-1000}
+        PROJECT_DIR: /workspace
+    environment:
+      PATH: /home/user/.nix-profile/bin:/home/user/.local/bin:/usr/local/bin:/usr/bin:/bin
+      POSTGRES_HOST: "postgres"
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: "jet"
+      POSTGRES_PASSWORD: "jet"
+      POSTGRES_DB: "jetdb"
+      MYSQL_HOST: "mysql"
+      MYSQL_PORT: "3306"
+      MYSQL_USER: "jet"
+      MYSQL_PASSWORD: "jet"
+      MYSQL_DB: "dvds"
+      MARIADB_HOST: "mariadb"
+      MARIADB_PORT: "3306"
+      MARIADB_USER: "jet"
+      MARIADB_PASSWORD: "jet"
+      MARIADB_DB: "dvds"
+    command: sleep infinity
+    volumes:
+      - .:/workspace:cached
+      - nix:/nix
+      - go:/home/user/go
+    links:
+      - postgres
+      - mysql
+      - mariadb
+    network_mode: bridge
+    security_opt:
+      - label:disable
+
+  postgres:
+    image: postgres:10-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: jet 
+      POSTGRES_PASSWORD: jet 
+      POSTGRES_DB: jetdb
+    network_mode: bridge
+
+  mysql:
+    image: mysql:8.0
+    command:
+      - "--sql_mode=STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION"
+      - "--default-authentication-plugin=mysql_native_password"
+      - "--log-bin-trust-function-creators=1"
+      - "--max_allowed_packet=64M"
+    volumes:
+      - "./mysql-init.sql:/docker-entrypoint-initdb.d/init.sql"
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: jet
+      MYSQL_DATABASE: dvds
+      MYSQL_USER: jet
+      MYSQL_PASSWORD: jet
+    network_mode: bridge
+    security_opt:
+      - label:disable
+      
+  mariadb:
+    image: mariadb:10.5
+    command:
+      - "--sql_mode=STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION"
+      - "--default-authentication-plugin=mysql_native_password"
+      - "--log-bin-trust-function-creators=1"
+      - "--max_allowed_packet=64M"
+    volumes:
+      - "./mysql-init.sql:/docker-entrypoint-initdb.d/init.sql"
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: jet
+      MYSQL_DATABASE: dvds
+      MYSQL_USER: jet
+      MYSQL_PASSWORD: jet
+    network_mode: bridge
+    security_opt:
+      - label:disable
+
+volumes:
+  nix:
+  go:
