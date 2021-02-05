@@ -3,14 +3,13 @@ package jet
 import (
 	"bytes"
 	"fmt"
-	"github.com/go-jet/jet/v2/internal/3rdparty/pq"
-	"github.com/go-jet/jet/v2/internal/utils"
-	"github.com/google/uuid"
 	"reflect"
 	"strconv"
 	"strings"
 	"time"
 	"unicode"
+
+	"github.com/go-jet/jet/v2/internal/utils"
 )
 
 // SerializeOption type
@@ -162,6 +161,11 @@ func (s *SQLBuilder) finalize() (string, []interface{}) {
 }
 
 func (s *SQLBuilder) insertConstantArgument(arg interface{}) {
+	if val := s.Dialect.ArgToString(arg); val != "" {
+		s.WriteString(val)
+		return
+	}
+
 	s.WriteString(argToString(arg))
 }
 
@@ -177,6 +181,7 @@ func (s *SQLBuilder) insertParametrizedArgument(arg interface{}) {
 	s.WriteString(argPlaceholder)
 }
 
+// default argToStr implementation
 func argToString(value interface{}) string {
 	if utils.IsNil(value) {
 		return "NULL"
@@ -200,20 +205,15 @@ func argToString(value interface{}) string {
 		return stringQuote(bindVal)
 	case []byte:
 		return stringQuote(string(bindVal))
-	case uuid.UUID:
-		return stringQuote(bindVal.String())
 	case time.Time:
-		return stringQuote(string(pq.FormatTimestamp(bindVal)))
+		return stringQuote(bindVal.Format("2006-01-02 15:04:05.999999999Z07:00"))
 	default:
-		if strBindValue, ok := bindVal.(toStringInterface); ok {
+		if strBindValue, ok := bindVal.(fmt.Stringer); ok {
 			return stringQuote(strBindValue.String())
 		}
-		panic(fmt.Sprintf("jet: %s type can not be used as SQL query parameter", reflect.TypeOf(value).String()))
-	}
-}
 
-type toStringInterface interface {
-	String() string
+		panic(fmt.Sprintf("jet: %T type can not be used as SQL query parameter", value))
+	}
 }
 
 func integerTypesToString(value interface{}) string {

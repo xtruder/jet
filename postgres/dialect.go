@@ -1,15 +1,19 @@
 package postgres
 
 import (
-	"github.com/go-jet/jet/v2/internal/jet"
+	"database/sql/driver"
 	"strconv"
+	"strings"
+	"time"
+
+	"github.com/go-jet/jet/v2/internal/jet"
+	"github.com/lib/pq"
 )
 
 // Dialect is implementation of postgres dialect for SQL Builder serialisation.
 var Dialect = newDialect()
 
 func newDialect() jet.Dialect {
-
 	operatorSerializeOverrides := map[string]jet.SerializeOverride{}
 	operatorSerializeOverrides[jet.StringRegexpLikeOperator] = postgresREGEXPLIKEoperator
 	operatorSerializeOverrides[jet.StringNotRegexpLikeOperator] = postgresNOTREGEXPLIKEoperator
@@ -24,10 +28,38 @@ func newDialect() jet.Dialect {
 		ArgumentPlaceholder: func(ord int) string {
 			return "$" + strconv.Itoa(ord)
 		},
-		ReservedWords: reservedWords,
+		ReservedWords:   reservedWords,
+		ArgToStringFunc: argToString,
 	}
 
 	return jet.NewDialect(dialectParams)
+}
+
+func argToString(value interface{}) string {
+	switch bindVal := value.(type) {
+	case time.Time:
+		return stringQuote(string(pq.FormatTimestamp(bindVal)))
+	case *pq.StringArray,
+		*pq.BoolArray,
+		*pq.ByteaArray,
+		*pq.Float32Array,
+		*pq.Float64Array,
+		*pq.Int32Array,
+		*pq.Int64Array:
+		// reuse driver.Valuer to convert to array value
+		val, err := bindVal.(driver.Valuer).Value()
+		if err != nil {
+			panic(err)
+		}
+
+		return stringQuote(val.(string))
+	}
+
+	return ""
+}
+
+func stringQuote(value string) string {
+	return `'` + strings.Replace(value, "'", "''", -1) + `'`
 }
 
 func postgresCAST(expressions ...jet.Serializer) jet.SerializerFunc {

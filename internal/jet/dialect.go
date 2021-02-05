@@ -12,10 +12,14 @@ type Dialect interface {
 	IdentifierQuoteChar() byte
 	ArgumentPlaceholder() QueryPlaceholderFunc
 	IsReservedWord(name string) bool
+	ArgToString(value interface{}) string
 }
 
 // SerializerFunc func
 type SerializerFunc func(statement StatementType, out *SQLBuilder, options ...SerializeOption)
+
+// ArgToStringFunc that converts value to string
+type ArgToStringFunc func(value interface{}) string
 
 // SerializeOverride func
 type SerializeOverride func(expressions ...Serializer) SerializerFunc
@@ -33,6 +37,7 @@ type DialectParams struct {
 	IdentifierQuoteChar        byte
 	ArgumentPlaceholder        QueryPlaceholderFunc
 	ReservedWords              []string
+	ArgToStringFunc            ArgToStringFunc
 }
 
 // NewDialect creates new dialect with params
@@ -46,6 +51,7 @@ func NewDialect(params DialectParams) Dialect {
 		identifierQuoteChar:        params.IdentifierQuoteChar,
 		argumentPlaceholder:        params.ArgumentPlaceholder,
 		reservedWords:              arrayOfStringsToMapOfStrings(params.ReservedWords),
+		argToStringFunc:            params.ArgToStringFunc,
 	}
 }
 
@@ -58,6 +64,7 @@ type dialectImpl struct {
 	identifierQuoteChar        byte
 	argumentPlaceholder        QueryPlaceholderFunc
 	reservedWords              map[string]bool
+	argToStringFunc            ArgToStringFunc
 
 	supportsReturning bool
 }
@@ -99,6 +106,14 @@ func (d *dialectImpl) ArgumentPlaceholder() QueryPlaceholderFunc {
 func (d *dialectImpl) IsReservedWord(name string) bool {
 	_, isReservedWord := d.reservedWords[strings.ToLower(name)]
 	return isReservedWord
+}
+
+func (d *dialectImpl) ArgToString(value interface{}) string {
+	if d.argToStringFunc != nil {
+		return d.argToStringFunc(value)
+	}
+
+	return ""
 }
 
 func arrayOfStringsToMapOfStrings(arr []string) map[string]bool {
