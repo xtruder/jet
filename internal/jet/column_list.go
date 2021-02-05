@@ -45,16 +45,16 @@ func (cl ColumnList) Name() string { return "" }
 
 // TableName is placeholder for ColumnList to implement Column interface
 func (cl ColumnList) TableName() string                { return "" }
-func (cl ColumnList) setTableName(name string)         {}
-func (cl ColumnList) setSubQuery(subQuery SelectTable) {}
+func (cl ColumnList) SetTableName(name string)         {}
+func (cl ColumnList) SetSubQuery(subQuery SelectTable) {}
 func (cl ColumnList) defaultAlias() string             { return "" }
 
 // SetTableName is utility function to set table name from outside of jet package to avoid making public setTableName
 func SetTableName(columnExpression ColumnExpression, tableName string) {
-	columnExpression.setTableName(tableName)
+	columnExpression.SetTableName(tableName)
 }
 
 // SetSubQuery is utility function to set table name from outside of jet package to avoid making public setSubQuery
 func SetSubQuery(columnExpression ColumnExpression, subQuery SelectTable) {
-	columnExpression.setSubQuery(subQuery)
+	columnExpression.SetSubQuery(subQuery)
 }

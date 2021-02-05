@@ -328,7 +328,7 @@ type wrap struct {
 
 func (n *wrap) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	out.WriteString("(")
-	serializeExpressionList(statement, n.expressions, ", ", out)
+	SerializeExpressionList(statement, n.expressions, ", ", out)
 	out.WriteString(")")
 }
 

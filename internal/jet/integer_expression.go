@@ -136,7 +136,7 @@ func newBinaryIntegerOperatorExpression(lhs, rhs IntegerExpression, operator str
 
 //---------------------------------------------------//
 func newPrefixIntegerOperatorExpression(expression IntegerExpression, operator string) IntegerExpression {
-	return IntExp(newPrefixOperatorExpression(expression, operator))
+	return IntExp(NewPrefixOperatorExpression(expression, operator))
 }
 
 //---------------------------------------------------//

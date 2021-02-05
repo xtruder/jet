@@ -60,27 +60,27 @@ func (s *stringInterfaceImpl) LT_EQ(rhs StringExpression) BoolExpression {
 }
 
 func (s *stringInterfaceImpl) CONCAT(rhs Expression) StringExpression {
-	return newBinaryStringOperatorExpression(s.parent, rhs, StringConcatOperator)
+	return NewBinaryStringOperatorExpression(s.parent, rhs, StringConcatOperator)
 }
 
 func (s *stringInterfaceImpl) LIKE(pattern StringExpression) BoolExpression {
-	return newBinaryBoolOperatorExpression(s.parent, pattern, "LIKE")
+	return NewBinaryBoolOperatorExpression(s.parent, pattern, "LIKE")
 }
 
 func (s *stringInterfaceImpl) NOT_LIKE(pattern StringExpression) BoolExpression {
-	return newBinaryBoolOperatorExpression(s.parent, pattern, "NOT LIKE")
+	return NewBinaryBoolOperatorExpression(s.parent, pattern, "NOT LIKE")
 }
 
 func (s *stringInterfaceImpl) REGEXP_LIKE(pattern StringExpression, caseSensitive ...bool) BoolExpression {
-	return newBinaryBoolOperatorExpression(s.parent, pattern, StringRegexpLikeOperator, Bool(len(caseSensitive) > 0 && caseSensitive[0]))
+	return NewBinaryBoolOperatorExpression(s.parent, pattern, StringRegexpLikeOperator, Bool(len(caseSensitive) > 0 && caseSensitive[0]))
 }
 
 func (s *stringInterfaceImpl) NOT_REGEXP_LIKE(pattern StringExpression, caseSensitive ...bool) BoolExpression {
-	return newBinaryBoolOperatorExpression(s.parent, pattern, StringNotRegexpLikeOperator, Bool(len(caseSensitive) > 0 && caseSensitive[0]))
+	return NewBinaryBoolOperatorExpression(s.parent, pattern, StringNotRegexpLikeOperator, Bool(len(caseSensitive) > 0 && caseSensitive[0]))
 }
 
 //---------------------------------------------------//
-func newBinaryStringOperatorExpression(lhs, rhs Expression, operator string) StringExpression {
+func NewBinaryStringOperatorExpression(lhs, rhs Expression, operator string) StringExpression {
 	return StringExp(NewBinaryOperatorExpression(lhs, rhs, operator))
 }
 

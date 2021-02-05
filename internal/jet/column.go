@@ -7,8 +7,8 @@ type Column interface {
 	Name() string
 	TableName() string
 
-	setTableName(table string)
-	setSubQuery(subQuery SelectTable)
+	SetTableName(table string)
+	SetSubQuery(subQuery SelectTable)
 	defaultAlias() string
 }
 
@@ -60,11 +60,11 @@ func (c *ColumnExpressionImpl) TableName() string {
 	return c.tableName
 }
 
-func (c *ColumnExpressionImpl) setTableName(table string) {
+func (c *ColumnExpressionImpl) SetTableName(table string) {
 	c.tableName = table
 }
 
-func (c *ColumnExpressionImpl) setSubQuery(subQuery SelectTable) {
+func (c *ColumnExpressionImpl) SetSubQuery(subQuery SelectTable) {
 	c.subQuery = subQuery
 }
 
@@ -78,7 +78,7 @@ func (c *ColumnExpressionImpl) defaultAlias() string {
 
 func (c *ColumnExpressionImpl) fromImpl(subQuery SelectTable) Projection {
 	newColumn := NewColumnImpl(c.name, c.tableName, nil)
-	newColumn.setSubQuery(subQuery)
+	newColumn.SetSubQuery(subQuery)
 
 	return &newColumn
 }

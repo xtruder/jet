@@ -53,50 +53,50 @@ func (b *boolInterfaceImpl) IS_NOT_DISTINCT_FROM(rhs BoolExpression) BoolExpress
 }
 
 func (b *boolInterfaceImpl) AND(expression BoolExpression) BoolExpression {
-	return newBinaryBoolOperatorExpression(b.parent, expression, "AND")
+	return NewBinaryBoolOperatorExpression(b.parent, expression, "AND")
 }
 
 func (b *boolInterfaceImpl) OR(expression BoolExpression) BoolExpression {
-	return newBinaryBoolOperatorExpression(b.parent, expression, "OR")
+	return NewBinaryBoolOperatorExpression(b.parent, expression, "OR")
 }
 
 func (b *boolInterfaceImpl) IS_TRUE() BoolExpression {
-	return newPostfixBoolOperatorExpression(b.parent, "IS TRUE")
+	return NewPostfixBoolOperatorExpression(b.parent, "IS TRUE")
 }
 
 func (b *boolInterfaceImpl) IS_NOT_TRUE() BoolExpression {
-	return newPostfixBoolOperatorExpression(b.parent, "IS NOT TRUE")
+	return NewPostfixBoolOperatorExpression(b.parent, "IS NOT TRUE")
 }
 
 func (b *boolInterfaceImpl) IS_FALSE() BoolExpression {
-	return newPostfixBoolOperatorExpression(b.parent, "IS FALSE")
+	return NewPostfixBoolOperatorExpression(b.parent, "IS FALSE")
 }
 
 func (b *boolInterfaceImpl) IS_NOT_FALSE() BoolExpression {
-	return newPostfixBoolOperatorExpression(b.parent, "IS NOT FALSE")
+	return NewPostfixBoolOperatorExpression(b.parent, "IS NOT FALSE")
 }
 
 func (b *boolInterfaceImpl) IS_UNKNOWN() BoolExpression {
-	return newPostfixBoolOperatorExpression(b.parent, "IS UNKNOWN")
+	return NewPostfixBoolOperatorExpression(b.parent, "IS UNKNOWN")
 }
 
 func (b *boolInterfaceImpl) IS_NOT_UNKNOWN() BoolExpression {
-	return newPostfixBoolOperatorExpression(b.parent, "IS NOT UNKNOWN")
+	return NewPostfixBoolOperatorExpression(b.parent, "IS NOT UNKNOWN")
 }
 
 //---------------------------------------------------//
-func newBinaryBoolOperatorExpression(lhs, rhs Expression, operator string, additionalParams ...Expression) BoolExpression {
+func NewBinaryBoolOperatorExpression(lhs, rhs Expression, operator string, additionalParams ...Expression) BoolExpression {
 	return BoolExp(NewBinaryOperatorExpression(lhs, rhs, operator, additionalParams...))
 }
 
 //---------------------------------------------------//
-func newPrefixBoolOperatorExpression(expression Expression, operator string) BoolExpression {
-	return BoolExp(newPrefixOperatorExpression(expression, operator))
+func NewPrefixBoolOperatorExpression(expression Expression, operator string) BoolExpression {
+	return BoolExp(NewPrefixOperatorExpression(expression, operator))
 }
 
 //---------------------------------------------------//
-func newPostfixBoolOperatorExpression(expression Expression, operator string) BoolExpression {
-	return BoolExp(newPostfixOperatorExpression(expression, operator))
+func NewPostfixBoolOperatorExpression(expression Expression, operator string) BoolExpression {
+	return BoolExp(NewPostfixOperatorExpression(expression, operator))
 }
 
 //---------------------------------------------------//

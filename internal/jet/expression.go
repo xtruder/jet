@@ -38,22 +38,22 @@ func (e *ExpressionInterfaceImpl) fromImpl(subQuery SelectTable) Projection {
 
 // IS_NULL tests expression whether it is a NULL value.
 func (e *ExpressionInterfaceImpl) IS_NULL() BoolExpression {
-	return newPostfixBoolOperatorExpression(e.Parent, "IS NULL")
+	return NewPostfixBoolOperatorExpression(e.Parent, "IS NULL")
 }
 
 // IS_NOT_NULL tests expression whether it is a non-NULL value.
 func (e *ExpressionInterfaceImpl) IS_NOT_NULL() BoolExpression {
-	return newPostfixBoolOperatorExpression(e.Parent, "IS NOT NULL")
+	return NewPostfixBoolOperatorExpression(e.Parent, "IS NOT NULL")
 }
 
 // IN checks if this expressions matches any in expressions list
 func (e *ExpressionInterfaceImpl) IN(expressions ...Expression) BoolExpression {
-	return newBinaryBoolOperatorExpression(e.Parent, WRAP(expressions...), "IN")
+	return NewBinaryBoolOperatorExpression(e.Parent, WRAP(expressions...), "IN")
 }
 
 // NOT_IN checks if this expressions is different of all expressions in expressions list
 func (e *ExpressionInterfaceImpl) NOT_IN(expressions ...Expression) BoolExpression {
-	return newBinaryBoolOperatorExpression(e.Parent, WRAP(expressions...), "NOT IN")
+	return NewBinaryBoolOperatorExpression(e.Parent, WRAP(expressions...), "NOT IN")
 }
 
 // AS the temporary alias name to assign to the expression
@@ -145,7 +145,7 @@ type prefixExpression struct {
 	operator   string
 }
 
-func newPrefixOperatorExpression(expression Expression, operator string) *prefixExpression {
+func NewPrefixOperatorExpression(expression Expression, operator string) *prefixExpression {
 	prefixExpression := &prefixExpression{
 		expression: expression,
 		operator:   operator,
@@ -176,7 +176,7 @@ type postfixOpExpression struct {
 	operator   string
 }
 
-func newPostfixOperatorExpression(expression Expression, operator string) *postfixOpExpression {
+func NewPostfixOperatorExpression(expression Expression, operator string) *postfixOpExpression {
 	postfixOpExpression := &postfixOpExpression{
 		expression: expression,
 		operator:   operator,

@@ -15,7 +15,7 @@ type Table interface {
 	columns() []Column
 	SchemaName() string
 	TableName() string
-	AS(alias string)
+	ALIAS(alias string)
 }
 
 // NewTable creates new table with schema Name, table Name and list of columns
@@ -28,7 +28,7 @@ func NewTable(schemaName, name string, columns ...ColumnExpression) SerializerTa
 	}
 
 	for _, c := range columns {
-		c.setTableName(name)
+		c.SetTableName(name)
 	}
 
 	return &t
@@ -41,11 +41,11 @@ type tableImpl struct {
 	columnList []ColumnExpression
 }
 
-func (t *tableImpl) AS(alias string) {
+func (t *tableImpl) ALIAS(alias string) {
 	t.alias = alias
 
 	for _, c := range t.columnList {
-		c.setTableName(alias)
+		c.SetTableName(alias)
 	}
 }
 
@@ -129,7 +129,7 @@ func (t *joinTableImpl) TableName() string {
 	return ""
 }
 
-func (t *joinTableImpl) AS(alias string) {
+func (t *joinTableImpl) ALIAS(alias string) {
 }
 
 func (t *joinTableImpl) columns() []Column {

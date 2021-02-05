@@ -1,13 +1,13 @@
 package jet
 
 import (
-	"github.com/go-jet/jet/v2/internal/utils"
 	"reflect"
+
+	"github.com/go-jet/jet/v2/internal/utils"
 )
 
 // SerializeClauseList func
 func SerializeClauseList(statement StatementType, clauses []Serializer, out *SQLBuilder) {
-
 	for i, c := range clauses {
 		if i > 0 {
 			out.WriteString(", ")
@@ -21,8 +21,7 @@ func SerializeClauseList(statement StatementType, clauses []Serializer, out *SQL
 	}
 }
 
-func serializeExpressionList(statement StatementType, expressions []Expression, separator string, out *SQLBuilder) {
-
+func SerializeExpressionList(statement StatementType, expressions []Expression, separator string, out *SQLBuilder) {
 	for i, value := range expressions {
 		if i > 0 {
 			out.WriteString(separator)

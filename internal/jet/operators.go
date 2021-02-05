@@ -11,7 +11,7 @@ const (
 
 // NOT returns negation of bool expression result
 func NOT(exp BoolExpression) BoolExpression {
-	return newPrefixBoolOperatorExpression(exp, "NOT")
+	return NewPrefixBoolOperatorExpression(exp, "NOT")
 }
 
 // BIT_NOT inverts every bit in integer expression result
@@ -26,47 +26,47 @@ func BIT_NOT(expr IntegerExpression) IntegerExpression {
 
 // EXISTS checks for existence of the rows in subQuery
 func EXISTS(subQuery Expression) BoolExpression {
-	return newPrefixBoolOperatorExpression(subQuery, "EXISTS")
+	return NewPrefixBoolOperatorExpression(subQuery, "EXISTS")
 }
 
 // Eq returns a representation of "a=b"
 func Eq(lhs, rhs Expression) BoolExpression {
-	return newBinaryBoolOperatorExpression(lhs, rhs, "=")
+	return NewBinaryBoolOperatorExpression(lhs, rhs, "=")
 }
 
 // NotEq returns a representation of "a!=b"
 func NotEq(lhs, rhs Expression) BoolExpression {
-	return newBinaryBoolOperatorExpression(lhs, rhs, "!=")
+	return NewBinaryBoolOperatorExpression(lhs, rhs, "!=")
 }
 
 // IsDistinctFrom returns a representation of "a IS DISTINCT FROM b"
 func IsDistinctFrom(lhs, rhs Expression) BoolExpression {
-	return newBinaryBoolOperatorExpression(lhs, rhs, "IS DISTINCT FROM")
+	return NewBinaryBoolOperatorExpression(lhs, rhs, "IS DISTINCT FROM")
 }
 
 // IsNotDistinctFrom returns a representation of "a IS NOT DISTINCT FROM b"
 func IsNotDistinctFrom(lhs, rhs Expression) BoolExpression {
-	return newBinaryBoolOperatorExpression(lhs, rhs, "IS NOT DISTINCT FROM")
+	return NewBinaryBoolOperatorExpression(lhs, rhs, "IS NOT DISTINCT FROM")
 }
 
 // Lt returns a representation of "a<b"
 func Lt(lhs Expression, rhs Expression) BoolExpression {
-	return newBinaryBoolOperatorExpression(lhs, rhs, "<")
+	return NewBinaryBoolOperatorExpression(lhs, rhs, "<")
 }
 
 // LtEq returns a representation of "a<=b"
 func LtEq(lhs, rhs Expression) BoolExpression {
-	return newBinaryBoolOperatorExpression(lhs, rhs, "<=")
+	return NewBinaryBoolOperatorExpression(lhs, rhs, "<=")
 }
 
 // Gt returns a representation of "a>b"
 func Gt(lhs, rhs Expression) BoolExpression {
-	return newBinaryBoolOperatorExpression(lhs, rhs, ">")
+	return NewBinaryBoolOperatorExpression(lhs, rhs, ">")
 }
 
 // GtEq returns a representation of "a>=b"
 func GtEq(lhs, rhs Expression) BoolExpression {
-	return newBinaryBoolOperatorExpression(lhs, rhs, ">=")
+	return NewBinaryBoolOperatorExpression(lhs, rhs, ">=")
 }
 
 // Add notEq returns a representation of "a + b"

@@ -37,7 +37,7 @@ func (w *windowImpl) Serialize(statement StatementType, out *SQLBuilder, options
 	if w.partitionBy != nil {
 		out.WriteString("PARTITION BY")
 
-		serializeExpressionList(statement, w.partitionBy, ", ", out)
+		SerializeExpressionList(statement, w.partitionBy, ", ", out)
 	}
 	w.orderBy.SkipDelimiter = true
 	w.orderBy.Serialize(statement, out, FallTrough(options)...)
