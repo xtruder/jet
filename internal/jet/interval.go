@@ -31,7 +31,7 @@ type IntervalImpl struct {
 	IsIntervalImpl
 }
 
-func (i IntervalImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+func (i IntervalImpl) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	out.WriteString("INTERVAL")
-	i.interval.serialize(statement, out, FallTrough(options)...)
+	i.interval.Serialize(statement, out, FallTrough(options)...)
 }

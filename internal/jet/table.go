@@ -67,7 +67,7 @@ func (t *tableImpl) columns() []Column {
 	return ret
 }
 
-func (t *tableImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+func (t *tableImpl) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	if t == nil {
 		panic("jet: tableImpl is nil")
 	}
@@ -145,7 +145,7 @@ func (t *joinTableImpl) columns() []Column {
 	return ret
 }
 
-func (t *joinTableImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+func (t *joinTableImpl) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	if t == nil {
 		panic("jet: Join table is nil. ")
 	}
@@ -154,7 +154,7 @@ func (t *joinTableImpl) serialize(statement StatementType, out *SQLBuilder, opti
 		panic("jet: left hand side of join operation is nil table")
 	}
 
-	t.lhs.serialize(statement, out, FallTrough(options)...)
+	t.lhs.Serialize(statement, out, FallTrough(options)...)
 
 	out.NewLine()
 
@@ -175,7 +175,7 @@ func (t *joinTableImpl) serialize(statement StatementType, out *SQLBuilder, opti
 		panic("jet: right hand side of join operation is nil table")
 	}
 
-	t.rhs.serialize(statement, out)
+	t.rhs.Serialize(statement, out)
 
 	if t.onCondition == nil && t.joinType != CrossJoin {
 		panic("jet: join condition is nil")
@@ -183,6 +183,6 @@ func (t *joinTableImpl) serialize(statement StatementType, out *SQLBuilder, opti
 
 	if t.onCondition != nil {
 		out.WriteString("ON")
-		t.onCondition.serialize(statement, out)
+		t.onCondition.Serialize(statement, out)
 	}
 }

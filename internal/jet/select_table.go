@@ -32,8 +32,8 @@ func (s selectTableImpl) AllColumns() ProjectionList {
 	return projectionList.(ProjectionList)
 }
 
-func (s selectTableImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	s.selectStmt.serialize(statement, out)
+func (s selectTableImpl) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+	s.selectStmt.Serialize(statement, out)
 
 	out.WriteString("AS")
 	out.WriteIdentifier(s.alias)

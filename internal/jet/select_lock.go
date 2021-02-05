@@ -34,7 +34,7 @@ func (s *selectLockImpl) SKIP_LOCKED() RowLock {
 	return s
 }
 
-func (s *selectLockImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+func (s *selectLockImpl) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	out.WriteString(s.lockStrength)
 
 	if s.noWait {

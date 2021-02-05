@@ -41,11 +41,11 @@ func mysqlBitXor(expressions ...jet.Serializer) jet.SerializerFunc {
 		lhs := expressions[0]
 		rhs := expressions[1]
 
-		jet.Serialize(lhs, statement, out, options...)
+		lhs.Serialize(statement, out, options...)
 
 		out.WriteString("^")
 
-		jet.Serialize(rhs, statement, out, options...)
+		rhs.Serialize(statement, out, options...)
 	}
 }
 
@@ -56,11 +56,11 @@ func mysqlCONCAToperator(expressions ...jet.Serializer) jet.SerializerFunc {
 		}
 		out.WriteString("CONCAT(")
 
-		jet.Serialize(expressions[0], statement, out, options...)
+		expressions[0].Serialize(statement, out, options...)
 
 		out.WriteString(", ")
 
-		jet.Serialize(expressions[1], statement, out, options...)
+		expressions[1].Serialize(statement, out, options...)
 
 		out.WriteString(")")
 	}
@@ -75,7 +75,7 @@ func mysqlDivision(expressions ...jet.Serializer) jet.SerializerFunc {
 		lhs := expressions[0]
 		rhs := expressions[1]
 
-		jet.Serialize(lhs, statement, out, options...)
+		lhs.Serialize(statement, out, options...)
 
 		_, isLhsInt := lhs.(IntegerExpression)
 		_, isRhsInt := rhs.(IntegerExpression)
@@ -86,7 +86,7 @@ func mysqlDivision(expressions ...jet.Serializer) jet.SerializerFunc {
 			out.WriteString("/")
 		}
 
-		jet.Serialize(rhs, statement, out, options...)
+		rhs.Serialize(statement, out, options...)
 	}
 }
 
@@ -96,9 +96,9 @@ func mysqlISNOTDISTINCTFROM(expressions ...jet.Serializer) jet.SerializerFunc {
 			panic("jet: invalid number of expressions for operator")
 		}
 
-		jet.Serialize(expressions[0], statement, out)
+		expressions[0].Serialize(statement, out)
 		out.WriteString("<=>")
-		jet.Serialize(expressions[1], statement, out)
+		expressions[1].Serialize(statement, out)
 	}
 }
 
@@ -116,7 +116,7 @@ func mysqlREGEXPLIKEoperator(expressions ...jet.Serializer) jet.SerializerFunc {
 			panic("jet: invalid number of expressions for operator")
 		}
 
-		jet.Serialize(expressions[0], statement, out, options...)
+		expressions[0].Serialize(statement, out, options...)
 
 		caseSensitive := false
 
@@ -132,7 +132,7 @@ func mysqlREGEXPLIKEoperator(expressions ...jet.Serializer) jet.SerializerFunc {
 			out.WriteString("BINARY")
 		}
 
-		jet.Serialize(expressions[1], statement, out, options...)
+		expressions[1].Serialize(statement, out, options...)
 	}
 }
 
@@ -142,7 +142,7 @@ func mysqlNOTREGEXPLIKEoperator(expressions ...jet.Serializer) jet.SerializerFun
 			panic("jet: invalid number of expressions for operator")
 		}
 
-		jet.Serialize(expressions[0], statement, out, options...)
+		expressions[0].Serialize(statement, out, options...)
 
 		caseSensitive := false
 
@@ -158,7 +158,7 @@ func mysqlNOTREGEXPLIKEoperator(expressions ...jet.Serializer) jet.SerializerFun
 			out.WriteString("BINARY")
 		}
 
-		jet.Serialize(expressions[1], statement, out, options...)
+		expressions[1].Serialize(statement, out, options...)
 	}
 }
 

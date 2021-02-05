@@ -46,7 +46,7 @@ func FixedLiteral(value interface{}) *literalExpressionImpl {
 	return exp
 }
 
-func (l *literalExpressionImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+func (l *literalExpressionImpl) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	if l.constant {
 		out.insertConstantArgument(l.value)
 	} else {
@@ -298,7 +298,7 @@ func newNullLiteral() Expression {
 	return nullExpression
 }
 
-func (n *nullLiteral) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+func (n *nullLiteral) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	out.WriteString("NULL")
 }
 
@@ -315,7 +315,7 @@ func newStarLiteral() Expression {
 	return starExpression
 }
 
-func (n *starLiteral) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+func (n *starLiteral) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	out.WriteString("*")
 }
 
@@ -326,7 +326,7 @@ type wrap struct {
 	expressions []Expression
 }
 
-func (n *wrap) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+func (n *wrap) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	out.WriteString("(")
 	serializeExpressionList(statement, n.expressions, ", ", out)
 	out.WriteString(")")
@@ -348,7 +348,7 @@ type rawExpression struct {
 	Raw string
 }
 
-func (n *rawExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+func (n *rawExpression) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	out.WriteString(n.Raw)
 }
 

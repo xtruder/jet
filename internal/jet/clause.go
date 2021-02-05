@@ -6,7 +6,7 @@ import (
 
 // Clause interface
 type Clause interface {
-	Serialize(statementType StatementType, out *SQLBuilder, options ...SerializeOption)
+	Serializer
 }
 
 // ClauseWithProjections interface
@@ -57,7 +57,7 @@ func (f *ClauseFrom) Serialize(statementType StatementType, out *SQLBuilder, opt
 	out.WriteString("FROM")
 
 	out.IncreaseIdent()
-	f.Table.serialize(statementType, out, FallTrough(options)...)
+	f.Table.Serialize(statementType, out, FallTrough(options)...)
 	out.DecreaseIdent()
 }
 
@@ -81,7 +81,7 @@ func (c *ClauseWhere) Serialize(statementType StatementType, out *SQLBuilder, op
 	out.WriteString("WHERE")
 
 	out.IncreaseIdent()
-	c.Condition.serialize(statementType, out, NoWrap.WithFallTrough(options)...)
+	c.Condition.Serialize(statementType, out, NoWrap.WithFallTrough(options)...)
 	out.DecreaseIdent()
 }
 
@@ -131,7 +131,7 @@ func (c *ClauseHaving) Serialize(statementType StatementType, out *SQLBuilder, o
 	out.WriteString("HAVING")
 
 	out.IncreaseIdent()
-	c.Condition.serialize(statementType, out, NoWrap.WithFallTrough(options)...)
+	c.Condition.Serialize(statementType, out, NoWrap.WithFallTrough(options)...)
 	out.DecreaseIdent()
 }
 
@@ -206,7 +206,7 @@ func (f *ClauseFor) Serialize(statementType StatementType, out *SQLBuilder, opti
 
 	out.NewLine()
 	out.WriteString("FOR")
-	f.Lock.serialize(statementType, out, FallTrough(options)...)
+	f.Lock.Serialize(statementType, out, FallTrough(options)...)
 }
 
 // ClauseSetStmtOperator struct
@@ -248,7 +248,7 @@ func (s *ClauseSetStmtOperator) Serialize(statementType StatementType, out *SQLB
 			panic("jet: select statement of '" + s.Operator + "' is nil")
 		}
 
-		selectStmt.serialize(statementType, out, FallTrough(options)...)
+		selectStmt.Serialize(statementType, out, FallTrough(options)...)
 	}
 
 	s.OrderBy.Serialize(statementType, out)
@@ -270,7 +270,7 @@ func (u *ClauseUpdate) Serialize(statementType StatementType, out *SQLBuilder, o
 		panic("jet: table to update is nil")
 	}
 
-	u.Table.serialize(statementType, out, FallTrough(options)...)
+	u.Table.Serialize(statementType, out, FallTrough(options)...)
 }
 
 // SetClause struct
@@ -306,7 +306,7 @@ func (s *SetClause) Serialize(statementType StatementType, out *SQLBuilder, opti
 
 		out.WriteString(" = ")
 
-		s.Values[i].serialize(UpdateStatementType, out, FallTrough(options)...)
+		s.Values[i].Serialize(UpdateStatementType, out, FallTrough(options)...)
 	}
 	out.DecreaseIdent(4)
 }
@@ -335,7 +335,7 @@ func (i *ClauseInsert) Serialize(statementType StatementType, out *SQLBuilder, o
 		panic("jet: table is nil for INSERT clause")
 	}
 
-	i.Table.serialize(statementType, out)
+	i.Table.Serialize(statementType, out)
 
 	if len(i.Columns) > 0 {
 		out.WriteString("(")
@@ -408,7 +408,7 @@ func (v *ClauseQuery) Serialize(statementType StatementType, out *SQLBuilder, op
 		return
 	}
 
-	v.Query.serialize(statementType, out, FallTrough(options)...)
+	v.Query.Serialize(statementType, out, FallTrough(options)...)
 }
 
 // ClauseDelete struct
@@ -425,7 +425,7 @@ func (d *ClauseDelete) Serialize(statementType StatementType, out *SQLBuilder, o
 		panic("jet: nil table in DELETE clause")
 	}
 
-	d.Table.serialize(statementType, out, FallTrough(options)...)
+	d.Table.Serialize(statementType, out, FallTrough(options)...)
 }
 
 // ClauseStatementBegin struct
@@ -444,7 +444,7 @@ func (d *ClauseStatementBegin) Serialize(statementType StatementType, out *SQLBu
 			out.WriteString(", ")
 		}
 
-		table.serialize(statementType, out, FallTrough(options)...)
+		table.Serialize(statementType, out, FallTrough(options)...)
 	}
 }
 
@@ -512,7 +512,7 @@ func (i *ClauseWindow) Serialize(statementType StatementType, out *SQLBuilder, o
 			out.WriteString("()")
 			continue
 		}
-		def.Window.serialize(statementType, out, FallTrough(options)...)
+		def.Window.Serialize(statementType, out, FallTrough(options)...)
 	}
 }
 
@@ -540,7 +540,7 @@ func (s SetClauseNew) Serialize(statementType StatementType, out *SQLBuilder, op
 			out.NewLine()
 		}
 
-		assigment.serialize(statementType, out, FallTrough(options)...)
+		assigment.Serialize(statementType, out, FallTrough(options)...)
 	}
 
 	out.DecreaseIdent(4)
@@ -553,5 +553,5 @@ type KeywordClause struct {
 
 // Serialize for KeywordClause
 func (k KeywordClause) Serialize(statementType StatementType, out *SQLBuilder, options ...SerializeOption) {
-	k.serialize(statementType, out, FallTrough(options)...)
+	k.Keyword.Serialize(statementType, out, FallTrough(options)...)
 }

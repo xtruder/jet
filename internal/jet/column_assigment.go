@@ -13,8 +13,8 @@ type columnAssigmentImpl struct {
 
 func (a columnAssigmentImpl) isColumnAssigment() {}
 
-func (a columnAssigmentImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	a.column.serialize(statement, out, ShortName.WithFallTrough(options)...)
+func (a columnAssigmentImpl) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+	a.column.Serialize(statement, out, ShortName.WithFallTrough(options)...)
 	out.WriteString("=")
-	a.expression.serialize(statement, out, FallTrough(options)...)
+	a.expression.Serialize(statement, out, FallTrough(options)...)
 }

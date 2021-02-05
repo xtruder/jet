@@ -87,6 +87,6 @@ func (o *onConflictClause) Serialize(statementType jet.StatementType, out *jet.S
 	o.whereClause.Serialize(statementType, out, jet.SkipNewLine, jet.ShortName)
 
 	out.IncreaseIdent(7)
-	jet.Serialize(o.do, statementType, out)
+	o.do.Serialize(statementType, out)
 	out.DecreaseIdent(7)
 }

@@ -50,7 +50,7 @@ func postgresCAST(expressions ...jet.Serializer) jet.SerializerFunc {
 			panic("jet: cast type is not string")
 		}
 
-		jet.Serialize(expression, statement, out, options...)
+		expression.Serialize(statement, out, options...)
 		out.WriteString("::" + castType)
 	}
 }
@@ -61,7 +61,7 @@ func postgresREGEXPLIKEoperator(expressions ...jet.Serializer) jet.SerializerFun
 			panic("jet: invalid number of expressions for operator")
 		}
 
-		jet.Serialize(expressions[0], statement, out, options...)
+		expressions[0].Serialize(statement, out, options...)
 
 		caseSensitive := false
 
@@ -77,7 +77,7 @@ func postgresREGEXPLIKEoperator(expressions ...jet.Serializer) jet.SerializerFun
 			out.WriteString("~*")
 		}
 
-		jet.Serialize(expressions[1], statement, out, options...)
+		expressions[1].Serialize(statement, out, options...)
 	}
 }
 
@@ -87,7 +87,7 @@ func postgresNOTREGEXPLIKEoperator(expressions ...jet.Serializer) jet.Serializer
 			panic("jet: invalid number of expressions for operator")
 		}
 
-		jet.Serialize(expressions[0], statement, out, options...)
+		expressions[0].Serialize(statement, out, options...)
 
 		caseSensitive := false
 
@@ -103,7 +103,7 @@ func postgresNOTREGEXPLIKEoperator(expressions ...jet.Serializer) jet.Serializer
 			out.WriteString("!~*")
 		}
 
-		jet.Serialize(expressions[1], statement, out, options...)
+		expressions[1].Serialize(statement, out, options...)
 	}
 }
 

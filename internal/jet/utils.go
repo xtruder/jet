@@ -17,7 +17,7 @@ func SerializeClauseList(statement StatementType, clauses []Serializer, out *SQL
 			panic("jet: nil clause")
 		}
 
-		c.serialize(statement, out)
+		c.Serialize(statement, out)
 	}
 }
 
@@ -28,7 +28,7 @@ func serializeExpressionList(statement StatementType, expressions []Expression, 
 			out.WriteString(separator)
 		}
 
-		value.serialize(statement, out)
+		value.Serialize(statement, out)
 	}
 }
 
@@ -75,7 +75,7 @@ func SerializeColumnExpressionNames(columns []ColumnExpression, statementType St
 			panic("jet: nil column in columns list")
 		}
 
-		col.serialize(statementType, out, options...)
+		col.Serialize(statementType, out, options...)
 	}
 }
 

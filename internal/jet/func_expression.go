@@ -615,7 +615,7 @@ func newWindowFunc(name string, expressions ...Expression) windowExpression {
 	return windowExpr
 }
 
-func (f *funcExpressionImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+func (f *funcExpressionImpl) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	if serializeOverride := out.Dialect.FunctionSerializeOverride(f.name); serializeOverride != nil {
 		serializeOverrideFunc := serializeOverride(ExpressionListToSerializerList(f.expressions)...)
 		serializeOverrideFunc(statement, out, FallTrough(options)...)

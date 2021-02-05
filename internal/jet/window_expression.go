@@ -13,11 +13,11 @@ func (w *commonWindowImpl) over(window ...Window) {
 	}
 }
 
-func (w *commonWindowImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	w.expression.serialize(statement, out)
+func (w *commonWindowImpl) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+	w.expression.Serialize(statement, out)
 	if w.window != nil {
 		out.WriteString("OVER")
-		w.window.serialize(statement, out, FallTrough(options)...)
+		w.window.Serialize(statement, out, FallTrough(options)...)
 	}
 }
 
@@ -48,8 +48,8 @@ func (f *windowExpressionImpl) OVER(window ...Window) Expression {
 	return f
 }
 
-func (f *windowExpressionImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	f.commonWindowImpl.serialize(statement, out, FallTrough(options)...)
+func (f *windowExpressionImpl) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+	f.commonWindowImpl.Serialize(statement, out, FallTrough(options)...)
 }
 
 // -----------------------------------------------------
@@ -79,8 +79,8 @@ func (f *floatWindowExpressionImpl) OVER(window ...Window) FloatExpression {
 	return f
 }
 
-func (f *floatWindowExpressionImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	f.commonWindowImpl.serialize(statement, out, FallTrough(options)...)
+func (f *floatWindowExpressionImpl) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+	f.commonWindowImpl.Serialize(statement, out, FallTrough(options)...)
 }
 
 // ------------------------------------------------
@@ -110,8 +110,8 @@ func (f *integerWindowExpressionImpl) OVER(window ...Window) IntegerExpression {
 	return f
 }
 
-func (f *integerWindowExpressionImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	f.commonWindowImpl.serialize(statement, out, FallTrough(options)...)
+func (f *integerWindowExpressionImpl) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+	f.commonWindowImpl.Serialize(statement, out, FallTrough(options)...)
 }
 
 // ------------------------------------------------
@@ -141,6 +141,6 @@ func (f *boolWindowExpressionImpl) OVER(window ...Window) BoolExpression {
 	return f
 }
 
-func (f *boolWindowExpressionImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	f.commonWindowImpl.serialize(statement, out, FallTrough(options)...)
+func (f *boolWindowExpressionImpl) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+	f.commonWindowImpl.Serialize(statement, out, FallTrough(options)...)
 }

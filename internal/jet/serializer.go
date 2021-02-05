@@ -34,13 +34,9 @@ const (
 
 // Serializer interface
 type Serializer interface {
-	serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption)
+	Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption)
 }
 
-// Serialize func
-func Serialize(exp Serializer, statementType StatementType, out *SQLBuilder, options ...SerializeOption) {
-	exp.serialize(statementType, out, options...)
-}
 
 func contains(options []SerializeOption, option SerializeOption) bool {
 	for _, opt := range options {
@@ -71,12 +67,12 @@ type ListSerializer struct {
 	Separator   string
 }
 
-func (s ListSerializer) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+func (s ListSerializer) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	for i, ser := range s.Serializers {
 		if i > 0 {
 			out.WriteString(s.Separator)
 		}
-		ser.serialize(statement, out, FallTrough(options)...)
+		ser.Serialize(statement, out, FallTrough(options)...)
 	}
 }
 
@@ -89,7 +85,7 @@ type serializerImpl struct {
 	Clauses []Clause
 }
 
-func (s serializerImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+func (s serializerImpl) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	for _, clause := range s.Clauses {
 		clause.Serialize(statement, out, FallTrough(options)...)
 	}

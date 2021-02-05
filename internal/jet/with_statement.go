@@ -27,7 +27,7 @@ type withImpl struct {
 	primaryStatement SerializerStatement
 }
 
-func (w withImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+func (w withImpl) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	out.NewLine()
 	out.WriteString("WITH")
 
@@ -38,7 +38,7 @@ func (w withImpl) serialize(statement StatementType, out *SQLBuilder, options ..
 
 		cte.serialize(statement, out, FallTrough(options)...)
 	}
-	w.primaryStatement.serialize(statement, out, NoWrap.WithFallTrough(options)...)
+	w.primaryStatement.Serialize(statement, out, NoWrap.WithFallTrough(options)...)
 }
 
 func (w withImpl) projections() ProjectionList {
@@ -60,7 +60,7 @@ func CTE(name string) CommonTableExpression {
 	}
 }
 
-func (c CommonTableExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+func (c CommonTableExpression) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	out.WriteIdentifier(c.alias)
 }
 
@@ -78,5 +78,5 @@ type CommonTableExpressionDefinition struct {
 func (c CommonTableExpressionDefinition) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	out.WriteIdentifier(c.cte.alias)
 	out.WriteString("AS")
-	c.cte.selectStmt.serialize(statement, out, FallTrough(options)...)
+	c.cte.selectStmt.Serialize(statement, out, FallTrough(options)...)
 }

@@ -72,15 +72,15 @@ func (e *ExpressionInterfaceImpl) DESC() OrderByClause {
 }
 
 func (e *ExpressionInterfaceImpl) serializeForGroupBy(statement StatementType, out *SQLBuilder) {
-	e.Parent.serialize(statement, out, NoWrap)
+	e.Parent.Serialize(statement, out, NoWrap)
 }
 
 func (e *ExpressionInterfaceImpl) serializeForProjection(statement StatementType, out *SQLBuilder) {
-	e.Parent.serialize(statement, out, NoWrap)
+	e.Parent.Serialize(statement, out, NoWrap)
 }
 
 func (e *ExpressionInterfaceImpl) serializeForOrderBy(statement StatementType, out *SQLBuilder) {
-	e.Parent.serialize(statement, out, NoWrap)
+	e.Parent.Serialize(statement, out, NoWrap)
 }
 
 // Representation of binary operations (e.g. comparisons, arithmetic)
@@ -109,7 +109,7 @@ func NewBinaryOperatorExpression(lhs, rhs Serializer, operator string, additiona
 	return binaryExpression
 }
 
-func (c *binaryOperatorExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+func (c *binaryOperatorExpression) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	if c.lhs == nil {
 		panic("jet: lhs is nil for '" + c.operator + "' operator")
 	}
@@ -127,9 +127,9 @@ func (c *binaryOperatorExpression) serialize(statement StatementType, out *SQLBu
 		serializeOverrideFunc := serializeOverride(c.lhs, c.rhs, c.additionalParam)
 		serializeOverrideFunc(statement, out, FallTrough(options)...)
 	} else {
-		c.lhs.serialize(statement, out, FallTrough(options)...)
+		c.lhs.Serialize(statement, out, FallTrough(options)...)
 		out.WriteString(c.operator)
-		c.rhs.serialize(statement, out, FallTrough(options)...)
+		c.rhs.Serialize(statement, out, FallTrough(options)...)
 	}
 
 	if wrap {
@@ -155,7 +155,7 @@ func newPrefixOperatorExpression(expression Expression, operator string) *prefix
 	return prefixExpression
 }
 
-func (p *prefixExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+func (p *prefixExpression) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	out.WriteString("(")
 	out.WriteString(p.operator)
 
@@ -163,7 +163,7 @@ func (p *prefixExpression) serialize(statement StatementType, out *SQLBuilder, o
 		panic("jet: nil prefix expression in prefix operator " + p.operator)
 	}
 
-	p.expression.serialize(statement, out, FallTrough(options)...)
+	p.expression.Serialize(statement, out, FallTrough(options)...)
 
 	out.WriteString(")")
 }
@@ -187,12 +187,12 @@ func newPostfixOperatorExpression(expression Expression, operator string) *postf
 	return postfixOpExpression
 }
 
-func (p *postfixOpExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+func (p *postfixOpExpression) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	if p.expression == nil {
 		panic("jet: nil prefix expression in postfix operator " + p.operator)
 	}
 
-	p.expression.serialize(statement, out, FallTrough(options)...)
+	p.expression.Serialize(statement, out, FallTrough(options)...)
 
 	out.WriteString(p.operator)
 }

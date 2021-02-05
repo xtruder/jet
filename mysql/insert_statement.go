@@ -79,7 +79,7 @@ func (s onDuplicateKeyUpdateClause) Serialize(statementType jet.StatementType, o
 			out.NewLine()
 		}
 
-		jet.Serialize(assigment, statementType, out, jet.ShortName.WithFallTrough(options)...)
+		assigment.Serialize(statementType, out, jet.ShortName.WithFallTrough(options)...)
 	}
 
 	out.DecreaseIdent(24)

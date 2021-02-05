@@ -29,7 +29,7 @@ func newWindowImpl(parent Window) *windowImpl {
 	return newWindow
 }
 
-func (w *windowImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+func (w *windowImpl) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	if !contains(options, NoWrap) {
 		out.WriteByte('(')
 	}
@@ -46,12 +46,12 @@ func (w *windowImpl) serialize(statement StatementType, out *SQLBuilder, options
 		out.WriteString(w.frameUnits)
 
 		if w.end == nil {
-			w.start.serialize(statement, out)
+			w.start.Serialize(statement, out)
 		} else {
 			out.WriteString("BETWEEN")
-			w.start.serialize(statement, out)
+			w.start.Serialize(statement, out)
 			out.WriteString("AND")
-			w.end.serialize(statement, out)
+			w.end.Serialize(statement, out)
 		}
 	}
 
@@ -135,11 +135,11 @@ type frameExtentImpl struct {
 
 func (f *frameExtentImpl) isFrameExtent() {}
 
-func (f *frameExtentImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+func (f *frameExtentImpl) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	if f == nil {
 		return
 	}
-	f.offset.serialize(statement, out, FallTrough(options)...)
+	f.offset.Serialize(statement, out, FallTrough(options)...)
 
 	if f.preceding {
 		out.WriteString("PRECEDING")
@@ -176,11 +176,11 @@ type windowName struct {
 	name string
 }
 
-func (w windowName) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+func (w windowName) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	out.WriteByte('(')
 
 	out.WriteString(w.name)
-	w.windowImpl.serialize(statement, out, NoWrap.WithFallTrough(options)...)
+	w.windowImpl.Serialize(statement, out, NoWrap.WithFallTrough(options)...)
 
 	out.WriteByte(')')
 }

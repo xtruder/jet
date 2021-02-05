@@ -36,8 +36,7 @@ type castExpression struct {
 	cast       string
 }
 
-func (b *castExpression) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-
+func (b *castExpression) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	expression := b.expression
 	castType := b.cast
 
@@ -47,7 +46,7 @@ func (b *castExpression) serialize(statement StatementType, out *SQLBuilder, opt
 	}
 
 	out.WriteString("CAST(")
-	expression.serialize(statement, out, FallTrough(options)...)
+	expression.Serialize(statement, out, FallTrough(options)...)
 	out.WriteString("AS")
 	out.WriteString(castType + ")")
 }

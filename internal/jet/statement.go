@@ -3,6 +3,7 @@ package jet
 import (
 	"context"
 	"database/sql"
+
 	"github.com/go-jet/jet/v2/qrm"
 )
 
@@ -48,10 +49,9 @@ type serializerStatementInterfaceImpl struct {
 }
 
 func (s *serializerStatementInterfaceImpl) Sql() (query string, args []interface{}) {
-
 	queryData := &SQLBuilder{Dialect: s.dialect}
 
-	s.parent.serialize(s.statementType, queryData, NoWrap)
+	s.parent.Serialize(s.statementType, queryData, NoWrap)
 
 	query, args = queryData.finalize()
 	return
@@ -60,7 +60,7 @@ func (s *serializerStatementInterfaceImpl) Sql() (query string, args []interface
 func (s *serializerStatementInterfaceImpl) DebugSql() (query string) {
 	sqlBuilder := &SQLBuilder{Dialect: s.dialect, Debug: true}
 
-	s.parent.serialize(s.statementType, sqlBuilder, NoWrap)
+	s.parent.Serialize(s.statementType, sqlBuilder, NoWrap)
 
 	query, _ = sqlBuilder.finalize()
 	return
@@ -133,7 +133,7 @@ type expressionStatementImpl struct {
 }
 
 func (s *expressionStatementImpl) serializeForProjection(statement StatementType, out *SQLBuilder) {
-	s.serialize(statement, out)
+	s.Serialize(statement, out)
 }
 
 // NewStatementImpl creates new statementImpl
@@ -164,7 +164,7 @@ func (s *statementImpl) projections() ProjectionList {
 	return nil
 }
 
-func (s *statementImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+func (s *statementImpl) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	if !contains(options, NoWrap) {
 		out.WriteString("(")
 		out.IncreaseIdent()

@@ -21,13 +21,13 @@ func (cl ColumnList) fromImpl(subQuery SelectTable) Projection {
 	return newProjectionList
 }
 
-func (cl ColumnList) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+func (cl ColumnList) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	out.WriteString("(")
 	for i, column := range cl {
 		if i > 0 {
 			out.WriteString(", ")
 		}
-		column.serialize(statement, out, FallTrough(options)...)
+		column.Serialize(statement, out, FallTrough(options)...)
 	}
 	out.WriteString(")")
 }

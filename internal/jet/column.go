@@ -90,18 +90,17 @@ func (c *ColumnExpressionImpl) serializeForOrderBy(statement StatementType, out 
 		return
 	}
 
-	c.serialize(statement, out)
+	c.Serialize(statement, out)
 }
 
 func (c ColumnExpressionImpl) serializeForProjection(statement StatementType, out *SQLBuilder) {
-	c.serialize(statement, out)
+	c.Serialize(statement, out)
 
 	out.WriteString("AS")
 	out.WriteAlias(c.defaultAlias())
 }
 
-func (c ColumnExpressionImpl) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-
+func (c ColumnExpressionImpl) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	if c.subQuery != nil {
 		out.WriteIdentifier(c.subQuery.Alias())
 		out.WriteByte('.')

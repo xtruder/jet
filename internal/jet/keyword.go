@@ -8,6 +8,6 @@ const (
 // Keyword type
 type Keyword string
 
-func (k Keyword) serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+func (k Keyword) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	out.WriteString(string(k))
 }

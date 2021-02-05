@@ -4,17 +4,18 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/go-jet/jet/v2/internal/jet"
-	"github.com/go-jet/jet/v2/internal/utils"
-	"github.com/go-jet/jet/v2/qrm"
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/require"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
 	"testing"
 	"time"
+
+	"github.com/go-jet/jet/v2/internal/jet"
+	"github.com/go-jet/jet/v2/internal/utils"
+	"github.com/go-jet/jet/v2/qrm"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 
 	"github.com/google/go-cmp/cmp"
 )
@@ -122,7 +123,7 @@ func AssertDebugStatementSql(t *testing.T, query jet.Statement, expectedQuery st
 // AssertSerialize checks if clause serialize produces expected query and args
 func AssertSerialize(t *testing.T, dialect jet.Dialect, serializer jet.Serializer, query string, args ...interface{}) {
 	out := jet.SQLBuilder{Dialect: dialect}
-	jet.Serialize(serializer, jet.SelectStatementType, &out)
+	serializer.Serialize(jet.SelectStatementType, &out)
 
 	//fmt.Println(out.Buff.String())
 
@@ -148,7 +149,7 @@ func AssertClauseSerialize(t *testing.T, dialect jet.Dialect, clause jet.Clause,
 // AssertDebugSerialize checks if clause serialize produces expected debug query and args
 func AssertDebugSerialize(t *testing.T, dialect jet.Dialect, clause jet.Serializer, query string, args ...interface{}) {
 	out := jet.SQLBuilder{Dialect: dialect, Debug: true}
-	jet.Serialize(clause, jet.SelectStatementType, &out)
+	clause.Serialize(jet.SelectStatementType, &out)
 
 	AssertDeepEqual(t, out.Buff.String(), query)
 
@@ -175,7 +176,7 @@ func AssertSerializeErr(t *testing.T, dialect jet.Dialect, clause jet.Serializer
 	}()
 
 	out := jet.SQLBuilder{Dialect: dialect}
-	jet.Serialize(clause, jet.SelectStatementType, &out)
+	clause.Serialize(jet.SelectStatementType, &out)
 }
 
 // AssertProjectionSerialize check if projection serialize produces expected query and args
