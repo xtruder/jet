@@ -22,8 +22,7 @@ func TestNewJoinTable(t *testing.T) {
 
 	joinTable := NewJoinTable(newTable1, newTable2, InnerJoin, IntegerColumn("intCol1").EQ(IntegerColumn("intCol2")))
 
-	assertSerialize(t, joinTable, `schema.table
-INNER JOIN schema.table2 ON ("intCol1" = "intCol2")`)
+	assertSerialize(t, joinTable, `schema.table INNER JOIN schema.table2 ON ("intCol1" = "intCol2")`)
 
 	require.Equal(t, joinTable.SchemaName(), "schema")
 	require.Equal(t, joinTable.TableName(), "")

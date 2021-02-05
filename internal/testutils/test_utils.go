@@ -89,7 +89,7 @@ func AssertJSONFile(t *testing.T, data interface{}, testRelativePath string) {
 
 // AssertStatementSql check if statement Sql() is the same as expectedQuery and expectedArgs
 func AssertStatementSql(t *testing.T, query jet.Statement, expectedQuery string, expectedArgs ...interface{}) {
-	queryStr, args := query.Sql()
+	queryStr, args := query.Sql(jet.SQLBuilderOptPretty)
 	require.Equal(t, queryStr, expectedQuery)
 
 	if len(expectedArgs) == 0 {
@@ -116,13 +116,13 @@ func AssertDebugStatementSql(t *testing.T, query jet.Statement, expectedQuery st
 		AssertDeepEqual(t, args, expectedArgs, "arguments are not equal")
 	}
 
-	debuqSql := query.DebugSql()
+	debuqSql := query.String()
 	require.Equal(t, debuqSql, expectedQuery)
 }
 
 // AssertSerialize checks if clause serialize produces expected query and args
 func AssertSerialize(t *testing.T, dialect jet.Dialect, serializer jet.Serializer, query string, args ...interface{}) {
-	out := jet.SQLBuilder{Dialect: dialect}
+	out := jet.SQLBuilder{Dialect: dialect, Pretty: true}
 	serializer.Serialize(jet.SelectStatementType, &out)
 
 	//fmt.Println(out.Buff.String())
@@ -136,7 +136,7 @@ func AssertSerialize(t *testing.T, dialect jet.Dialect, serializer jet.Serialize
 
 // AssertClauseSerialize checks if clause serialize produces expected query and args
 func AssertClauseSerialize(t *testing.T, dialect jet.Dialect, clause jet.Clause, query string, args ...interface{}) {
-	out := jet.SQLBuilder{Dialect: dialect}
+	out := jet.SQLBuilder{Dialect: dialect, Pretty: true}
 	clause.Serialize(jet.SelectStatementType, &out)
 
 	require.Equal(t, out.Buff.String(), query)
@@ -181,7 +181,7 @@ func AssertSerializeErr(t *testing.T, dialect jet.Dialect, clause jet.Serializer
 
 // AssertProjectionSerialize check if projection serialize produces expected query and args
 func AssertProjectionSerialize(t *testing.T, dialect jet.Dialect, projection jet.Projection, query string, args ...interface{}) {
-	out := jet.SQLBuilder{Dialect: dialect}
+	out := jet.SQLBuilder{Dialect: dialect, Pretty: true}
 	jet.SerializeForProjection(projection, jet.SelectStatementType, &out)
 
 	AssertDeepEqual(t, out.Buff.String(), query)

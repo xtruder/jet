@@ -69,14 +69,24 @@ func (s onDuplicateKeyUpdateClause) Serialize(statementType jet.StatementType, o
 	if len(s) == 0 {
 		return
 	}
-	out.NewLine()
+	if out.Pretty {
+		out.NewLine()
+	} else {
+		out.Space()
+	}
+
 	out.WriteString("ON DUPLICATE KEY UPDATE")
 	out.IncreaseIdent(24)
 
 	for i, assigment := range s {
 		if i > 0 {
 			out.WriteString(",")
-			out.NewLine()
+
+			if out.Pretty {
+				out.NewLine()
+			} else {
+				out.Space()
+			}
 		}
 
 		assigment.Serialize(statementType, out, jet.ShortName.WithFallTrough(options)...)

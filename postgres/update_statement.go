@@ -80,7 +80,11 @@ func (s *clauseSet) Serialize(statementType jet.StatementType, out *jet.SQLBuild
 	if len(s.Values) == 0 {
 		return
 	}
-	out.NewLine()
+	if out.Pretty {
+		out.NewLine()
+	} else {
+		out.Space()
+	}
 	out.WriteString("SET")
 
 	if len(s.Columns) == 0 {

@@ -29,7 +29,10 @@ func (s *ClauseSelect) Projections() ProjectionList {
 
 // Serialize serializes clause into SQLBuilder
 func (s *ClauseSelect) Serialize(statementType StatementType, out *SQLBuilder, options ...SerializeOption) {
-	out.NewLine()
+	if out.Pretty {
+		out.NewLine()
+	}
+
 	out.WriteString("SELECT")
 
 	if s.Distinct {
@@ -53,7 +56,11 @@ func (f *ClauseFrom) Serialize(statementType StatementType, out *SQLBuilder, opt
 	if f.Table == nil {
 		return
 	}
-	out.NewLine()
+
+	if out.Pretty {
+		out.NewLine()
+	}
+
 	out.WriteString("FROM")
 
 	out.IncreaseIdent()
@@ -75,9 +82,14 @@ func (c *ClauseWhere) Serialize(statementType StatementType, out *SQLBuilder, op
 		}
 		return
 	}
-	if !contains(options, SkipNewLine) {
-		out.NewLine()
+	if !serializeOptionsContain(options, SkipDelimiter) {
+		if out.Pretty {
+			out.NewLine()
+		} else {
+			out.Space()
+		}
 	}
+
 	out.WriteString("WHERE")
 
 	out.IncreaseIdent()
@@ -96,7 +108,10 @@ func (c *ClauseGroupBy) Serialize(statementType StatementType, out *SQLBuilder, 
 		return
 	}
 
-	out.NewLine()
+	if out.Pretty {
+		out.NewLine()
+	}
+
 	out.WriteString("GROUP BY")
 
 	out.IncreaseIdent()
@@ -127,7 +142,10 @@ func (c *ClauseHaving) Serialize(statementType StatementType, out *SQLBuilder, o
 		return
 	}
 
-	out.NewLine()
+	if out.Pretty {
+		out.NewLine()
+	}
+
 	out.WriteString("HAVING")
 
 	out.IncreaseIdent()
@@ -137,8 +155,8 @@ func (c *ClauseHaving) Serialize(statementType StatementType, out *SQLBuilder, o
 
 // ClauseOrderBy struct
 type ClauseOrderBy struct {
-	List        []OrderByClause
-	SkipNewLine bool
+	List          []OrderByClause
+	SkipDelimiter bool
 }
 
 // Serialize serializes clause into SQLBuilder
@@ -147,9 +165,14 @@ func (o *ClauseOrderBy) Serialize(statementType StatementType, out *SQLBuilder, 
 		return
 	}
 
-	if !o.SkipNewLine {
-		out.NewLine()
+	if !o.SkipDelimiter {
+		if out.Pretty {
+			out.NewLine()
+		} else {
+			out.Space()
+		}
 	}
+
 	out.WriteString("ORDER BY")
 
 	out.IncreaseIdent()
@@ -173,7 +196,12 @@ type ClauseLimit struct {
 // Serialize serializes clause into SQLBuilder
 func (l *ClauseLimit) Serialize(statementType StatementType, out *SQLBuilder, options ...SerializeOption) {
 	if l.Count >= 0 {
-		out.NewLine()
+		if out.Pretty {
+			out.NewLine()
+		} else {
+			out.Space()
+		}
+
 		out.WriteString("LIMIT")
 		out.insertParametrizedArgument(l.Count)
 	}
@@ -187,7 +215,12 @@ type ClauseOffset struct {
 // Serialize serializes clause into SQLBuilder
 func (o *ClauseOffset) Serialize(statementType StatementType, out *SQLBuilder, options ...SerializeOption) {
 	if o.Count >= 0 {
-		out.NewLine()
+		if out.Pretty {
+			out.NewLine()
+		} else {
+			out.Space()
+		}
+
 		out.WriteString("OFFSET")
 		out.insertParametrizedArgument(o.Count)
 	}
@@ -204,7 +237,12 @@ func (f *ClauseFor) Serialize(statementType StatementType, out *SQLBuilder, opti
 		return
 	}
 
-	out.NewLine()
+	if out.Pretty {
+		out.NewLine()
+	} else {
+		out.Space()
+	}
+
 	out.WriteString("FOR")
 	f.Lock.Serialize(statementType, out, FallTrough(options)...)
 }
@@ -234,14 +272,24 @@ func (s *ClauseSetStmtOperator) Serialize(statementType StatementType, out *SQLB
 	}
 
 	for i, selectStmt := range s.Selects {
-		out.NewLine()
+		if out.Pretty {
+			out.NewLine()
+		} else {
+			out.Space()
+		}
+
 		if i > 0 {
 			out.WriteString(s.Operator)
 
 			if s.All {
 				out.WriteString("ALL")
 			}
-			out.NewLine()
+
+			if out.Pretty {
+				out.NewLine()
+			} else {
+				out.Space()
+			}
 		}
 
 		if selectStmt == nil {
@@ -263,7 +311,10 @@ type ClauseUpdate struct {
 
 // Serialize serializes clause into SQLBuilder
 func (u *ClauseUpdate) Serialize(statementType StatementType, out *SQLBuilder, options ...SerializeOption) {
-	out.NewLine()
+	if out.Pretty {
+		out.NewLine()
+	}
+
 	out.WriteString("UPDATE")
 
 	if utils.IsNil(u.Table) {
@@ -284,7 +335,13 @@ func (s *SetClause) Serialize(statementType StatementType, out *SQLBuilder, opti
 	if len(s.Values) == 0 {
 		return
 	}
-	out.NewLine()
+
+	if out.Pretty {
+		out.NewLine()
+	} else {
+		out.Space()
+	}
+
 	out.WriteString("SET")
 
 	if len(s.Columns) != len(s.Values) {
@@ -295,7 +352,12 @@ func (s *SetClause) Serialize(statementType StatementType, out *SQLBuilder, opti
 	for i, column := range s.Columns {
 		if i > 0 {
 			out.WriteString(",")
-			out.NewLine()
+
+			if out.Pretty {
+				out.NewLine()
+			} else {
+				out.Space()
+			}
 		}
 
 		if column == nil {
@@ -328,7 +390,10 @@ func (i *ClauseInsert) GetColumns() []Column {
 
 // Serialize serializes clause into SQLBuilder
 func (i *ClauseInsert) Serialize(statementType StatementType, out *SQLBuilder, options ...SerializeOption) {
-	out.NewLine()
+	if out.Pretty {
+		out.NewLine()
+	}
+
 	out.WriteString("INSERT INTO")
 
 	if utils.IsNil(i.Table) {
@@ -377,13 +442,22 @@ func (v *ClauseValues) Serialize(statementType StatementType, out *SQLBuilder, o
 		return
 	}
 
-	out.NewLine()
+	if out.Pretty {
+		out.NewLine()
+	} else {
+		out.Space()
+	}
+
 	out.WriteString("VALUES")
 
 	for rowIndex, row := range v.Rows {
 		if rowIndex > 0 {
 			out.WriteString(",")
-			out.NewLine()
+			if out.Pretty {
+				out.NewLine()
+			} else {
+				out.Space()
+			}
 		} else {
 			out.IncreaseIdent(7)
 		}
@@ -418,7 +492,9 @@ type ClauseDelete struct {
 
 // Serialize serializes clause into SQLBuilder
 func (d *ClauseDelete) Serialize(statementType StatementType, out *SQLBuilder, options ...SerializeOption) {
-	out.NewLine()
+	if out.Pretty {
+		out.NewLine()
+	}
 	out.WriteString("DELETE FROM")
 
 	if d.Table == nil {
@@ -436,7 +512,10 @@ type ClauseStatementBegin struct {
 
 // Serialize serializes clause into SQLBuilder
 func (d *ClauseStatementBegin) Serialize(statementType StatementType, out *SQLBuilder, options ...SerializeOption) {
-	out.NewLine()
+	if out.Pretty {
+		out.NewLine()
+	}
+
 	out.WriteString(d.Name)
 
 	for i, table := range d.Tables {
@@ -461,7 +540,11 @@ func (d *ClauseOptional) Serialize(statementType StatementType, out *SQLBuilder,
 		return
 	}
 	if d.InNewLine {
-		out.NewLine()
+		if out.Pretty {
+			out.NewLine()
+		} else {
+			out.Space()
+		}
 	}
 	out.WriteString(d.Name)
 }
@@ -499,7 +582,11 @@ func (i *ClauseWindow) Serialize(statementType StatementType, out *SQLBuilder, o
 		return
 	}
 
-	out.NewLine()
+	if out.Pretty {
+		out.NewLine()
+	} else {
+		out.Space()
+	}
 	out.WriteString("WINDOW")
 
 	for i, def := range i.Definitions {
@@ -530,14 +617,24 @@ func (s SetClauseNew) Serialize(statementType StatementType, out *SQLBuilder, op
 	if len(s) == 0 {
 		return
 	}
-	out.NewLine()
+	if out.Pretty {
+		out.NewLine()
+	} else {
+		out.Space()
+	}
+
 	out.WriteString("SET")
 	out.IncreaseIdent(4)
 
 	for i, assigment := range s {
 		if i > 0 {
 			out.WriteString(",")
-			out.NewLine()
+
+			if out.Pretty {
+				out.NewLine()
+			} else {
+				out.Space()
+			}
 		}
 
 		assigment.Serialize(statementType, out, FallTrough(options)...)

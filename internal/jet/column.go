@@ -106,7 +106,7 @@ func (c ColumnExpressionImpl) Serialize(statement StatementType, out *SQLBuilder
 		out.WriteByte('.')
 		out.WriteIdentifier(c.defaultAlias())
 	} else {
-		if c.tableName != "" && !contains(options, ShortName) {
+		if c.tableName != "" && !serializeOptionsContain(options, ShortName) {
 			out.WriteIdentifier(c.tableName)
 			out.WriteByte('.')
 		}

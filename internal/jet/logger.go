@@ -4,8 +4,8 @@ import "context"
 
 // PrintableStatement is a statement which sql query can be logged
 type PrintableStatement interface {
-	Sql() (query string, args []interface{})
-	DebugSql() (query string)
+	Sql(...SQLBuilderOption) (query string, args []interface{})
+	String() (query string)
 }
 
 // LoggerFunc is a definition of a function user can implement to support automatic statement logging.

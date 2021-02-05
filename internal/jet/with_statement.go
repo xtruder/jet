@@ -28,7 +28,10 @@ type withImpl struct {
 }
 
 func (w withImpl) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	out.NewLine()
+	if out.Pretty {
+		out.NewLine()
+	}
+
 	out.WriteString("WITH")
 
 	for i, cte := range w.ctes {

@@ -156,7 +156,11 @@ func (t *joinTableImpl) Serialize(statement StatementType, out *SQLBuilder, opti
 
 	t.lhs.Serialize(statement, out, FallTrough(options)...)
 
-	out.NewLine()
+	if out.Pretty {
+		out.NewLine()
+	} else {
+		out.Space()
+	}
 
 	switch t.joinType {
 	case InnerJoin:

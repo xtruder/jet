@@ -117,7 +117,7 @@ func (c *binaryOperatorExpression) Serialize(statement StatementType, out *SQLBu
 		panic("jet: rhs is nil for '" + c.operator + "' operator")
 	}
 
-	wrap := !contains(options, NoWrap)
+	wrap := !serializeOptionsContain(options, NoWrap)
 
 	if wrap {
 		out.WriteString("(")

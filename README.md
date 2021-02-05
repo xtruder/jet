@@ -152,6 +152,7 @@ import (
 	// dot import is not mandatory
 	. "github.com/go-jet/jet/v2/examples/quick-start/.gen/jetdb/dvds/table"
 	. "github.com/go-jet/jet/v2/postgres"
+	. "github.com/go-jet/jet/v2/jet"
 
 	"github.com/go-jet/jet/v2/examples/quick-start/gen/jetdb/dvds/model"
 )
@@ -187,7 +188,7 @@ and can be compared only with integer columns and expressions.
 
 __How to get parametrized SQL query from statement?__
 ```go
-query, args := stmt.Sql()
+query, args := stmt.Sql(SQLBuilderOptPretty)
 ```
 query - parametrized query\
 args - parameters for the query
@@ -235,11 +236,11 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 
 </details>
     
-__How to get debug SQL from statement?__  
+__How to get SQL from statement?__  
  ```go
-debugSql := stmt.DebugSql()
+sqlQuery := stmt.String()
 ```
-debugSql - query string that can be copy pasted to sql editor and executed. __It's not intended to be used in production!!!__
+sqlQuery - query string that can be copy pasted to sql editor and executed. __It's not intended to be used in production!!!__
 
 <details>
   <summary>Click to see debug sql</summary>

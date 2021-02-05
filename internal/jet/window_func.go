@@ -30,7 +30,7 @@ func newWindowImpl(parent Window) *windowImpl {
 }
 
 func (w *windowImpl) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	if !contains(options, NoWrap) {
+	if !serializeOptionsContain(options, NoWrap) {
 		out.WriteByte('(')
 	}
 
@@ -39,7 +39,7 @@ func (w *windowImpl) Serialize(statement StatementType, out *SQLBuilder, options
 
 		serializeExpressionList(statement, w.partitionBy, ", ", out)
 	}
-	w.orderBy.SkipNewLine = true
+	w.orderBy.SkipDelimiter = true
 	w.orderBy.Serialize(statement, out, FallTrough(options)...)
 
 	if w.frameUnits != "" {
@@ -55,7 +55,7 @@ func (w *windowImpl) Serialize(statement StatementType, out *SQLBuilder, options
 		}
 	}
 
-	if !contains(options, NoWrap) {
+	if !serializeOptionsContain(options, NoWrap) {
 		out.WriteByte(')')
 	}
 }

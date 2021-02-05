@@ -10,10 +10,11 @@ import (
 //Statement is common interface for all statements(SELECT, INSERT, UPDATE, DELETE, LOCK)
 type Statement interface {
 	// Sql returns parametrized sql query with list of arguments.
-	Sql() (query string, args []interface{})
-	// DebugSql returns debug query where every parametrized placeholder is replaced with its argument.
-	// Do not use it in production. Use it only for debug purposes.
-	DebugSql() (query string)
+	Sql(options ...SQLBuilderOption) (query string, args []interface{})
+	// String returns string representation of query where every parametrized placeholder
+	// is replaced with its argument.
+	// Do not use it in production, use it only for debug purposes.
+	String() (query string)
 	// Query executes statement over database connection db and stores row result in destination.
 	// Destination can be either pointer to struct or pointer to a slice.
 	// If destination is pointer to struct and query result set is empty, method returns qrm.ErrNoRows.
@@ -48,21 +49,21 @@ type serializerStatementInterfaceImpl struct {
 	parent        SerializerStatement
 }
 
-func (s *serializerStatementInterfaceImpl) Sql() (query string, args []interface{}) {
-	queryData := &SQLBuilder{Dialect: s.dialect}
+func (s *serializerStatementInterfaceImpl) Sql(options ...SQLBuilderOption) (query string, args []interface{}) {
+	builder := NewSQLBuilder(s.dialect, options...)
 
-	s.parent.Serialize(s.statementType, queryData, NoWrap)
+	s.parent.Serialize(s.statementType, builder, NoWrap)
 
-	query, args = queryData.finalize()
+	query, args = builder.finalize()
 	return
 }
 
-func (s *serializerStatementInterfaceImpl) DebugSql() (query string) {
-	sqlBuilder := &SQLBuilder{Dialect: s.dialect, Debug: true}
+func (s *serializerStatementInterfaceImpl) String() (query string) {
+	builder := NewSQLBuilder(s.dialect, SQLBuilderOptDebug, SQLBuilderOptPretty)
 
-	s.parent.Serialize(s.statementType, sqlBuilder, NoWrap)
+	s.parent.Serialize(s.statementType, builder, NoWrap)
 
-	query, _ = sqlBuilder.finalize()
+	query, _ = builder.finalize()
 	return
 }
 
@@ -165,7 +166,7 @@ func (s *statementImpl) projections() ProjectionList {
 }
 
 func (s *statementImpl) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
-	if !contains(options, NoWrap) {
+	if !serializeOptionsContain(options, NoWrap) {
 		out.WriteString("(")
 		out.IncreaseIdent()
 	}
@@ -174,9 +175,13 @@ func (s *statementImpl) Serialize(statement StatementType, out *SQLBuilder, opti
 		clause.Serialize(statement, out, FallTrough(options)...)
 	}
 
-	if !contains(options, NoWrap) {
+	if !serializeOptionsContain(options, NoWrap) {
 		out.DecreaseIdent()
-		out.NewLine()
+
+		if out.Pretty {
+			out.NewLine()
+		}
+
 		out.WriteString(")")
 	}
 }

@@ -1,10 +1,11 @@
 package jet
 
 import (
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestArgToString(t *testing.T) {
@@ -44,8 +45,8 @@ func TestArgToString(t *testing.T) {
 
 func TestFallTrough(t *testing.T) {
 	require.Equal(t, FallTrough([]SerializeOption{ShortName}), []SerializeOption{ShortName})
-	require.Equal(t, FallTrough([]SerializeOption{SkipNewLine}), []SerializeOption(nil))
-	require.Equal(t, FallTrough([]SerializeOption{ShortName, SkipNewLine}), []SerializeOption{ShortName})
+	require.Equal(t, FallTrough([]SerializeOption{SkipDelimiter}), []SerializeOption(nil))
+	require.Equal(t, FallTrough([]SerializeOption{ShortName, SkipDelimiter}), []SerializeOption{ShortName})
 }
 
 func TestShouldQuote(t *testing.T) {

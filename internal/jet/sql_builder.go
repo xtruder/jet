@@ -13,6 +13,25 @@ import (
 	"unicode"
 )
 
+// SerializeOption type
+type SQLBuilderOption int
+
+// Serialize options
+const (
+	SQLBuilderOptPretty SQLBuilderOption = iota
+	SQLBuilderOptDebug
+)
+
+func sqlBuilderOptionsContain(options []SQLBuilderOption, option SQLBuilderOption) bool {
+	for _, opt := range options {
+		if opt == option {
+			return true
+		}
+	}
+
+	return false
+}
+
 // SQLBuilder generates output SQL
 type SQLBuilder struct {
 	Dialect Dialect
@@ -22,7 +41,22 @@ type SQLBuilder struct {
 	lastChar byte
 	ident    int
 
-	Debug bool
+	Debug  bool
+	Pretty bool
+}
+
+func NewSQLBuilder(dialect Dialect, options ...SQLBuilderOption) *SQLBuilder {
+	builder := &SQLBuilder{Dialect: dialect}
+
+	if sqlBuilderOptionsContain(options, SQLBuilderOptPretty) {
+		builder.Pretty = true
+	}
+
+	if sqlBuilderOptionsContain(options, SQLBuilderOptDebug) {
+		builder.Debug = true
+	}
+
+	return builder
 }
 
 const defaultIdent = 5
@@ -62,6 +96,10 @@ func (s *SQLBuilder) WriteProjections(statement StatementType, projections []Pro
 func (s *SQLBuilder) NewLine() {
 	s.write([]byte{'\n'})
 	s.write(bytes.Repeat([]byte{' '}, s.ident))
+}
+
+func (s *SQLBuilder) Space() {
+	s.write([]byte{' '})
 }
 
 func (s *SQLBuilder) write(data []byte) {
@@ -116,7 +154,11 @@ func (s *SQLBuilder) WriteByte(b byte) {
 }
 
 func (s *SQLBuilder) finalize() (string, []interface{}) {
-	return s.Buff.String() + ";\n", s.Args
+	if s.Pretty {
+		return s.Buff.String() + ";\n", s.Args
+	} else {
+		return s.Buff.String() + ";", s.Args
+	}
 }
 
 func (s *SQLBuilder) insertConstantArgument(arg interface{}) {

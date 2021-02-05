@@ -6,7 +6,7 @@ type SerializeOption int
 // Serialize options
 const (
 	NoWrap SerializeOption = iota
-	SkipNewLine
+	SkipDelimiter
 
 	fallTroughOptions // fall trough options
 	ShortName
@@ -37,8 +37,7 @@ type Serializer interface {
 	Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption)
 }
 
-
-func contains(options []SerializeOption, option SerializeOption) bool {
+func serializeOptionsContain(options []SerializeOption, option SerializeOption) bool {
 	for _, opt := range options {
 		if opt == option {
 			return true

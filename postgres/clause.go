@@ -13,7 +13,12 @@ func (r *clauseReturning) Serialize(statementType jet.StatementType, out *jet.SQ
 		return
 	}
 
-	out.NewLine()
+	if out.Pretty {
+		out.NewLine()
+	} else {
+		out.Space()
+	}
+
 	out.WriteString("RETURNING")
 	out.IncreaseIdent()
 	out.WriteProjections(statementType, r.ProjectionList)
@@ -71,7 +76,11 @@ func (o *onConflictClause) Serialize(statementType jet.StatementType, out *jet.S
 		return
 	}
 
-	out.NewLine()
+	if out.Pretty {
+		out.NewLine()
+	} else {
+		out.Space()
+	}
 	out.WriteString("ON CONFLICT")
 	if len(o.indexExpressions) > 0 {
 		out.WriteString("(")
@@ -84,7 +93,7 @@ func (o *onConflictClause) Serialize(statementType jet.StatementType, out *jet.S
 		out.WriteString(o.constraint)
 	}
 
-	o.whereClause.Serialize(statementType, out, jet.SkipNewLine, jet.ShortName)
+	o.whereClause.Serialize(statementType, out, jet.SkipDelimiter, jet.ShortName)
 
 	out.IncreaseIdent(7)
 	o.do.Serialize(statementType, out)
