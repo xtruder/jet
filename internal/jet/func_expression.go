@@ -585,7 +585,7 @@ func LEAST(value Expression, values ...Expression) Expression {
 type Func = funcExpressionImpl
 
 type funcExpressionImpl struct {
-	ExpressionInterfaceImpl
+	expressionInterfaceImpl
 
 	name        string
 	expressions []Expression
@@ -599,9 +599,9 @@ func NewFunc(name string, expressions []Expression, parent Expression) *funcExpr
 	}
 
 	if parent != nil {
-		funcExp.ExpressionInterfaceImpl.Parent = parent
+		funcExp.expressionInterfaceImpl.parent = parent
 	} else {
-		funcExp.ExpressionInterfaceImpl.Parent = funcExp
+		funcExp.expressionInterfaceImpl.parent = funcExp
 	}
 
 	return funcExp
@@ -611,7 +611,7 @@ func NewFunc(name string, expressions []Expression, parent Expression) *funcExpr
 func NewWindowFunc(name string, expressions ...Expression) windowExpression {
 	newFun := NewFunc(name, expressions, nil)
 	windowExpr := newWindowExpression(newFun)
-	newFun.ExpressionInterfaceImpl.Parent = windowExpr
+	newFun.expressionInterfaceImpl.parent = windowExpr
 
 	return windowExpr
 }
@@ -648,7 +648,7 @@ func NewBoolFunc(name string, expressions ...Expression) BoolExpression {
 
 	boolFunc.funcExpressionImpl = *NewFunc(name, expressions, boolFunc)
 	boolFunc.boolInterfaceImpl.parent = boolFunc
-	boolFunc.ExpressionInterfaceImpl.Parent = boolFunc
+	boolFunc.expressionInterfaceImpl.parent = boolFunc
 
 	return boolFunc
 }
@@ -660,7 +660,7 @@ func NewBoolWindowFunc(name string, expressions ...Expression) boolWindowExpress
 	boolFunc.funcExpressionImpl = *NewFunc(name, expressions, boolFunc)
 	intWindowFunc := newBoolWindowExpression(boolFunc)
 	boolFunc.boolInterfaceImpl.parent = intWindowFunc
-	boolFunc.ExpressionInterfaceImpl.Parent = intWindowFunc
+	boolFunc.expressionInterfaceImpl.parent = intWindowFunc
 
 	return intWindowFunc
 }
@@ -687,7 +687,7 @@ func NewFloatWindowFunc(name string, expressions ...Expression) floatWindowExpre
 	floatFunc.funcExpressionImpl = *NewFunc(name, expressions, floatFunc)
 	floatWindowFunc := newFloatWindowExpression(floatFunc)
 	floatFunc.floatInterfaceImpl.parent = floatWindowFunc
-	floatFunc.ExpressionInterfaceImpl.Parent = floatWindowFunc
+	floatFunc.expressionInterfaceImpl.parent = floatWindowFunc
 
 	return floatWindowFunc
 }
@@ -713,7 +713,7 @@ func NewIntegerWindowFunc(name string, expressions ...Expression) integerWindowE
 	integerFunc.funcExpressionImpl = *NewFunc(name, expressions, integerFunc)
 	intWindowFunc := newIntegerWindowExpression(integerFunc)
 	integerFunc.integerInterfaceImpl.parent = intWindowFunc
-	integerFunc.ExpressionInterfaceImpl.Parent = intWindowFunc
+	integerFunc.expressionInterfaceImpl.parent = intWindowFunc
 
 	return intWindowFunc
 }

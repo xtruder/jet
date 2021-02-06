@@ -26,7 +26,7 @@ type ColumnExpression interface {
 
 // ColumnExpressionImpl is base type for sql columns.
 type columnExpressionImpl struct {
-	ExpressionInterfaceImpl
+	expressionInterfaceImpl
 
 	name      string
 	tableName string
@@ -42,9 +42,9 @@ func NewColumnExpression(name string, tableName string, parent ColumnExpression)
 	}
 
 	if parent != nil {
-		bc.ExpressionInterfaceImpl.Parent = parent
+		bc.expressionInterfaceImpl.parent = parent
 	} else {
-		bc.ExpressionInterfaceImpl.Parent = bc
+		bc.expressionInterfaceImpl.parent = bc
 	}
 
 	return bc

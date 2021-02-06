@@ -116,7 +116,7 @@ type ExpressionStatement interface {
 // NewExpressionStatementImpl creates new expression statement
 func NewExpressionStatementImpl(Dialect Dialect, statementType StatementType, parent ExpressionStatement, clauses ...Clause) ExpressionStatement {
 	return &expressionStatementImpl{
-		ExpressionInterfaceImpl{Parent: parent},
+		expressionInterfaceImpl{parent: parent},
 		statementImpl{
 			serializerStatementInterfaceImpl: serializerStatementInterfaceImpl{
 				parent:        parent,
@@ -129,7 +129,7 @@ func NewExpressionStatementImpl(Dialect Dialect, statementType StatementType, pa
 }
 
 type expressionStatementImpl struct {
-	ExpressionInterfaceImpl
+	expressionInterfaceImpl
 	statementImpl
 }
 

@@ -24,13 +24,13 @@ func (b *castImpl) AS(castType string) Expression {
 		cast:       string(castType),
 	}
 
-	castExp.ExpressionInterfaceImpl.Parent = castExp
+	castExp.expressionInterfaceImpl.parent = castExp
 
 	return castExp
 }
 
 type castExpression struct {
-	ExpressionInterfaceImpl
+	expressionInterfaceImpl
 
 	expression Expression
 	cast       string
