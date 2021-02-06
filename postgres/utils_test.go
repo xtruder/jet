@@ -19,6 +19,8 @@ var (
 	table1ColDate       = DateColumn("col_date")
 	table1ColInterval   = IntervalColumn("col_interval")
 	table1ColArray      = ArrayColumn("col_array")
+	table1ColJSON       = JSONColumn("col_json")
+	table1ColJSONB      = JSONColumn("col_jsonb")
 )
 
 var table1 = NewTable(
@@ -35,6 +37,8 @@ var table1 = NewTable(
 	table1ColTimestampz,
 	table1ColInterval,
 	table1ColArray,
+	table1ColJSON,
+	table1ColJSONB,
 )
 
 var (
@@ -51,6 +55,8 @@ var (
 	table2ColDate       = DateColumn("col_date")
 	table2ColInterval   = IntervalColumn("col_interval")
 	table2ColArray      = ArrayColumn("col_array")
+	table2ColJSON       = JSONColumn("col_json")
+	table2ColJSONB      = JSONBColumn("col_jsonb")
 )
 
 var table2 = NewTable(
@@ -69,6 +75,8 @@ var table2 = NewTable(
 	table2ColTimestampz,
 	table2ColInterval,
 	table2ColArray,
+	table2ColJSON,
+	table2ColJSONB,
 )
 
 var (

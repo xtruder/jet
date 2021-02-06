@@ -69,3 +69,15 @@ func TestExpressionCAST_AS_INTERVAL(t *testing.T) {
 	assertSerialize(t, table2ColDate.SUB(CAST(Time(20, 11, 10)).AS_INTERVAL()),
 		"(table2.col_date - $1::time without time zone::interval)", "20:11:10")
 }
+
+func TestExpressionCAST_AS_ARRAY(t *testing.T) {
+	assertSerialize(t, CAST(table2ColStr).AS_ARRAY("text"), "table2.col_str::text[]")
+}
+
+func TestExpressionCAST_AS_JSON(t *testing.T) {
+	assertSerialize(t, CAST(table2ColStr).AS_JSON(), "table2.col_str::json")
+}
+
+func TestExpressionCAST_AS_JSONB(t *testing.T) {
+	assertSerialize(t, CAST(table2ColStr).AS_JSONB(), "table2.col_str::jsonb")
+}

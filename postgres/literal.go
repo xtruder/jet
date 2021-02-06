@@ -100,3 +100,11 @@ var Int64Array = func(values ...int64) ArrayExpression {
 var Int32Array = func(values ...int32) ArrayExpression {
 	return CAST(newArrayLiteral(values)).AS_ARRAY("int")
 }
+
+var JSON = func(value interface{}) JSONExpression {
+	return CAST(newJsonLiteral(value)).AS_JSON()
+}
+
+var JSONB = func(value interface{}) JSONBExpression {
+	return CAST(newJsonbLiteral(value)).AS_JSONB()
+}

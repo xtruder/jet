@@ -45,6 +45,10 @@ type cast interface {
 	AS_INTERVAL() IntervalExpression
 	// Cast expression as array type
 	AS_ARRAY(arrayElemType string) ArrayExpression
+	// Cast expression AS json type
+	AS_JSON() JSONExpression
+	// Cast expression AS jsonb type
+	AS_JSONB() JSONBExpression
 }
 
 type castImpl struct {
@@ -164,4 +168,14 @@ func (b *castImpl) AS_INTERVAL() IntervalExpression {
 
 func (b *castImpl) AS_ARRAY(arrayElemType string) ArrayExpression {
 	return ArrayExp(b.AS(arrayElemType + "[]"))
+}
+
+// Cast expressions AS json type
+func (b *castImpl) AS_JSON() JSONExpression {
+	return JSONExp(b.AS("json"))
+}
+
+// Cast expressions AS jsonb type
+func (b *castImpl) AS_JSONB() JSONBExpression {
+	return JSONBExp(b.AS("jsonb"))
 }

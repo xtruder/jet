@@ -1,6 +1,8 @@
 package postgres
 
-import "github.com/go-jet/jet/v2/internal/jet"
+import (
+	"github.com/go-jet/jet/v2/internal/jet"
+)
 
 // ROW is construct one table row from list of expressions.
 var ROW = jet.ROW
@@ -308,6 +310,82 @@ var EXISTS = jet.EXISTS
 // CASE create CASE operator with optional list of expressions
 var CASE = jet.CASE
 
+// --------------- JSON creation Functions -------------//
+
+func TO_JSON(expression Expression) JSONExpression {
+	return newJSONFunc("to_json", expression)
+}
+
+func TO_JSONB(expression Expression) JSONBExpression {
+	return newJSONBFunc("to_jsonb", expression)
+}
+
+func ARRAY_TO_JSON(expression ArrayExpression) JSONExpression {
+	return newJSONFunc("array_to_json", expression)
+}
+
+func ROW_TO_JSON(table string) JSONExpression {
+	return newJSONFunc("row_to_json", Raw(table))
+}
+
+func JSON_BUILD_OBJECT(expressions ...Expression) JSONExpression {
+	return newJSONFunc("json_build_object", explicitLiteralCasts(expressions...)...)
+}
+
+func JSONB_BUILD_OBJECT(expressions ...Expression) JSONBExpression {
+	return newJSONBFunc("jsonb_build_object", explicitLiteralCasts(expressions...)...)
+}
+
+func JSON_BUILD_ARRAY(expressions ...Expression) JSONExpression {
+	return newJSONFunc("json_build_array", explicitLiteralCasts(expressions...)...)
+}
+
+func JSONB_BUILD_ARRAY(expressions ...Expression) JSONBExpression {
+	return newJSONBFunc("jsonb_build_array", explicitLiteralCasts(expressions...)...)
+}
+
+// --------------- JSON aggregation Functions -------------//
+
+func JSON_AGG(expressions ...Expression) JSONExpression {
+	return newJSONFunc("json_agg", explicitLiteralCasts(expressions...)...)
+}
+
+func JSONB_AGG(expressions ...Expression) JSONBExpression {
+	return newJSONBFunc("jsonb_agg", explicitLiteralCasts(expressions...)...)
+}
+
+// --------------- JSON processing Functions -------------//
+
+func JSON_ARRAY_LENGTH(expression JSONExpression) IntegerExpression {
+	return IntExp(newJSONFunc("json_array_length", expression))
+}
+
+func JSONB_ARRAY_LENGTH(expression JSONBExpression) IntegerExpression {
+	return IntExp(newJSONBFunc("jsonb_array_length", expression))
+}
+
+// JSON_TYPEOF returns the type of the outermost JSON value as a text string
+func JSON_TYPEOF(expression JSONExpression) StringExpression {
+	return StringExp(newJSONFunc("json_typeof", expression))
+}
+
+// JSONB_TYPEOF returns the type of the outermost JSON value as a text string
+func JSONB_TYPEOF(expression JSONBExpression) StringExpression {
+	return StringExp(newJSONBFunc("jsonb_typeof", expression))
+}
+
+// JSON_TYPEOF returns the type of the outermost JSON value as a text string
+func JSON_STRIP_NULLS(expression JSONExpression) JSONExpression {
+	return newJSONFunc("json_strip_nulls", expression)
+}
+
+// JSONB_TYPEOF returns the type of the outermost JSON value as a text string
+func JSONB_STRIP_NULLS(expression JSONBExpression) JSONBExpression {
+	return newJSONBFunc("jsonb_strip_nulls", expression)
+}
+
+// --------------------------------------------//
+
 func explicitLiteralCasts(expressions ...Expression) []jet.Expression {
 	ret := []jet.Expression{}
 
@@ -332,6 +410,10 @@ func explicitLiteralCast(expresion Expression) jet.Expression {
 		return CAST(expresion).AS_NUMERIC()
 	case jet.StringExpression:
 		return CAST(expresion).AS_TEXT()
+	case JSONExpression:
+		return CAST(expresion).AS_JSON()
+	case JSONBExpression:
+		return CAST(expresion).AS_JSONB()
 	}
 
 	return expresion

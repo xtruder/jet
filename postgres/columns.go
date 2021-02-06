@@ -132,3 +132,77 @@ func ArrayColumn(name string) ColumnArray {
 
 	return arrayColumn
 }
+
+//------------------------------------------------------//
+
+// ColumnJSON is interface for SQL json types.
+type ColumnJSON interface {
+	JSONExpression
+	jet.Column
+
+	From(subQuery SelectTable) ColumnJSON
+	SET(jsonExp JSONExpression) ColumnAssigment
+}
+
+type jsonColumnImpl struct {
+	jsonInterfaceImpl
+	jet.ColumnExpression
+}
+
+func (i *jsonColumnImpl) From(subQuery SelectTable) ColumnJSON {
+	newStrColumn := JSONColumn(i.Name())
+	newStrColumn.SetTableName(i.TableName())
+	newStrColumn.SetSubQuery(subQuery)
+
+	return newStrColumn
+}
+
+func (i *jsonColumnImpl) SET(jsonExp JSONExpression) ColumnAssigment {
+	return jet.NewColumnAssigment(i, jsonExp)
+}
+
+// JSONColumn creates named json column.
+func JSONColumn(name string) ColumnJSON {
+	jsonColumn := &jsonColumnImpl{}
+	jsonColumn.jsonInterfaceImpl.parent = jsonColumn
+	jsonColumn.ColumnExpression = jet.NewColumnExpression(name, "", jsonColumn)
+
+	return jsonColumn
+}
+
+//------------------------------------------------------//
+
+// ColumnJSON is interface for SQL json types.
+type ColumnJSONB interface {
+	JSONBExpression
+	jet.Column
+
+	From(subQuery SelectTable) ColumnJSONB
+	SET(jsonbExp JSONBExpression) ColumnAssigment
+}
+
+type jsonbColumnImpl struct {
+	jsonbInterfaceImpl
+	jet.ColumnExpression
+}
+
+func (i *jsonbColumnImpl) From(subQuery SelectTable) ColumnJSONB {
+	newStrColumn := JSONBColumn(i.Name())
+	newStrColumn.SetTableName(i.TableName())
+	newStrColumn.SetSubQuery(subQuery)
+
+	return newStrColumn
+}
+
+func (i *jsonbColumnImpl) SET(jsonbExp JSONBExpression) ColumnAssigment {
+	return jet.NewColumnAssigment(i, jsonbExp)
+}
+
+// JSONBColumn creates named jsonb column.
+func JSONBColumn(name string) ColumnJSONB {
+	jsonbColumn := &jsonbColumnImpl{}
+	jsonbColumn.jsonbInterfaceImpl.parent = jsonbColumn
+	jsonbColumn.ColumnExpression = jet.NewColumnExpression(name, "", jsonbColumn)
+
+	return jsonbColumn
+}
