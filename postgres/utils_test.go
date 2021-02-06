@@ -7,16 +7,19 @@ import (
 	"github.com/go-jet/jet/v2/internal/testutils"
 )
 
-var table1Col1 = IntegerColumn("col1")
-var table1ColInt = IntegerColumn("col_int")
-var table1ColFloat = FloatColumn("col_float")
-var table1ColTime = TimeColumn("col_time")
-var table1ColTimez = TimezColumn("col_timez")
-var table1ColTimestamp = TimestampColumn("col_timestamp")
-var table1ColTimestampz = TimestampzColumn("col_timestampz")
-var table1ColBool = BoolColumn("col_bool")
-var table1ColDate = DateColumn("col_date")
-var table1ColInterval = IntervalColumn("col_interval")
+var (
+	table1Col1          = IntegerColumn("col1")
+	table1ColInt        = IntegerColumn("col_int")
+	table1ColFloat      = FloatColumn("col_float")
+	table1ColTime       = TimeColumn("col_time")
+	table1ColTimez      = TimezColumn("col_timez")
+	table1ColTimestamp  = TimestampColumn("col_timestamp")
+	table1ColTimestampz = TimestampzColumn("col_timestampz")
+	table1ColBool       = BoolColumn("col_bool")
+	table1ColDate       = DateColumn("col_date")
+	table1ColInterval   = IntervalColumn("col_interval")
+	table1ColArray      = ArrayColumn("col_array")
+)
 
 var table1 = NewTable(
 	"db",
@@ -31,20 +34,24 @@ var table1 = NewTable(
 	table1ColTimestamp,
 	table1ColTimestampz,
 	table1ColInterval,
+	table1ColArray,
 )
 
-var table2Col3 = IntegerColumn("col3")
-var table2Col4 = IntegerColumn("col4")
-var table2ColInt = IntegerColumn("col_int")
-var table2ColFloat = FloatColumn("col_float")
-var table2ColStr = StringColumn("col_str")
-var table2ColBool = BoolColumn("col_bool")
-var table2ColTime = TimeColumn("col_time")
-var table2ColTimez = TimezColumn("col_timez")
-var table2ColTimestamp = TimestampColumn("col_timestamp")
-var table2ColTimestampz = TimestampzColumn("col_timestampz")
-var table2ColDate = DateColumn("col_date")
-var table2ColInterval = IntervalColumn("col_interval")
+var (
+	table2Col3          = IntegerColumn("col3")
+	table2Col4          = IntegerColumn("col4")
+	table2ColInt        = IntegerColumn("col_int")
+	table2ColFloat      = FloatColumn("col_float")
+	table2ColStr        = StringColumn("col_str")
+	table2ColBool       = BoolColumn("col_bool")
+	table2ColTime       = TimeColumn("col_time")
+	table2ColTimez      = TimezColumn("col_timez")
+	table2ColTimestamp  = TimestampColumn("col_timestamp")
+	table2ColTimestampz = TimestampzColumn("col_timestampz")
+	table2ColDate       = DateColumn("col_date")
+	table2ColInterval   = IntervalColumn("col_interval")
+	table2ColArray      = ArrayColumn("col_array")
+)
 
 var table2 = NewTable(
 	"db",
@@ -61,11 +68,15 @@ var table2 = NewTable(
 	table2ColTimestamp,
 	table2ColTimestampz,
 	table2ColInterval,
+	table2ColArray,
 )
 
-var table3Col1 = IntegerColumn("col1")
-var table3ColInt = IntegerColumn("col_int")
-var table3StrCol = StringColumn("col2")
+var (
+	table3Col1   = IntegerColumn("col1")
+	table3ColInt = IntegerColumn("col_int")
+	table3StrCol = StringColumn("col2")
+)
+
 var table3 = NewTable(
 	"db",
 	"table3",

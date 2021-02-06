@@ -95,3 +95,40 @@ func IntervalColumn(name string) ColumnInterval {
 	intervalColumn.ColumnExpression = jet.NewColumnExpression(name, "", intervalColumn)
 	return intervalColumn
 }
+
+//------------------------------------------------------//
+
+// ColumnArray is interface for SQL array types.
+type ColumnArray interface {
+	ArrayExpression
+	jet.Column
+
+	From(subQuery SelectTable) ColumnArray
+	SET(arrayExp ArrayExpression) ColumnAssigment
+}
+
+type arrayColumnImpl struct {
+	arrayInterfaceImpl
+	jet.ColumnExpression
+}
+
+func (i *arrayColumnImpl) From(subQuery SelectTable) ColumnArray {
+	newArrayColumn := ArrayColumn(i.Name())
+	newArrayColumn.SetTableName(i.TableName())
+	newArrayColumn.SetSubQuery(subQuery)
+
+	return newArrayColumn
+}
+
+func (i *arrayColumnImpl) SET(arrayExp ArrayExpression) ColumnAssigment {
+	return jet.NewColumnAssigment(i, arrayExp)
+}
+
+// ArrayColumn creates named array column.
+func ArrayColumn(name string) ColumnArray {
+	arrayColumn := &arrayColumnImpl{}
+	arrayColumn.arrayInterfaceImpl.parent = arrayColumn
+	arrayColumn.ColumnExpression = jet.NewColumnExpression(name, "", arrayColumn)
+
+	return arrayColumn
+}

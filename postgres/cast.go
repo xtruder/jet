@@ -43,6 +43,8 @@ type cast interface {
 	AS_TIMESTAMPZ() TimestampzExpression
 	// Cast expression AS interval type
 	AS_INTERVAL() IntervalExpression
+	// Cast expression as array type
+	AS_ARRAY(arrayElemType string) ArrayExpression
 }
 
 type castImpl struct {
@@ -158,4 +160,8 @@ func (b *castImpl) AS_TIMESTAMPZ() TimestampzExpression {
 // Cast expression AS interval type
 func (b *castImpl) AS_INTERVAL() IntervalExpression {
 	return IntervalExp(b.AS("interval"))
+}
+
+func (b *castImpl) AS_ARRAY(arrayElemType string) ArrayExpression {
+	return ArrayExp(b.AS(arrayElemType + "[]"))
 }

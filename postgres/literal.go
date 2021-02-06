@@ -1,8 +1,9 @@
 package postgres
 
 import (
-	"github.com/go-jet/jet/v2/internal/jet"
 	"time"
+
+	"github.com/go-jet/jet/v2/internal/jet"
 )
 
 // Bool creates new bool literal expression
@@ -70,4 +71,32 @@ var Timestampz = func(year int, month time.Month, day, hour, minute, second int,
 // TimestampzT creates new timestamp literal expression from time.Time object
 var TimestampzT = func(t time.Time) TimestampzExpression {
 	return CAST(jet.TimestampzT(t)).AS_TIMESTAMPZ()
+}
+
+var Array = func(values interface{}) ArrayExpression {
+	return newArrayLiteral(values)
+}
+
+var BoolArray = func(values ...bool) ArrayExpression {
+	return CAST(newArrayLiteral(values)).AS_ARRAY("bool")
+}
+
+var StringArray = func(values ...string) ArrayExpression {
+	return CAST(newArrayLiteral(values)).AS_ARRAY("text")
+}
+
+var Float64Array = func(values ...float64) ArrayExpression {
+	return CAST(newArrayLiteral(values)).AS_ARRAY("double precision")
+}
+
+var Float32Array = func(values ...float32) ArrayExpression {
+	return CAST(newArrayLiteral(values)).AS_ARRAY("real")
+}
+
+var Int64Array = func(values ...int64) ArrayExpression {
+	return CAST(newArrayLiteral(values)).AS_ARRAY("bigint")
+}
+
+var Int32Array = func(values ...int32) ArrayExpression {
+	return CAST(newArrayLiteral(values)).AS_ARRAY("int")
 }

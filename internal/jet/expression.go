@@ -196,3 +196,40 @@ func (p *postfixOpExpression) Serialize(statement StatementType, out *SQLBuilder
 
 	out.WriteString(p.operator)
 }
+
+// A bracket operator Expression
+type sequenceOpExpression struct {
+	ExpressionInterfaceImpl
+
+	expressions  []Expression
+	sequenceType string
+}
+
+func NewSequenceOperatorExpression(expressions []Expression, sequenceType string) *sequenceOpExpression {
+	sequenceOpExpression := &sequenceOpExpression{
+		expressions:  expressions,
+		sequenceType: sequenceType,
+	}
+
+	sequenceOpExpression.ExpressionInterfaceImpl.Parent = sequenceOpExpression
+
+	return sequenceOpExpression
+}
+
+func (p *sequenceOpExpression) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+	if len(p.expressions) == 0 {
+		panic("jet: nil expressions in sequence type " + p.sequenceType)
+	}
+
+	out.WriteString(p.sequenceType + "[")
+
+	for i, expr := range p.expressions {
+		expr.Serialize(statement, out, FallTrough(options)...)
+
+		if i+1 != len(p.expressions) {
+			out.WriteString(",")
+		}
+	}
+
+	out.WriteString("]")
+}
