@@ -49,6 +49,26 @@ func IsNotDistinctFrom(lhs, rhs Expression) BoolExpression {
 	return NewBinaryBoolOperatorExpression(lhs, rhs, "IS NOT DISTINCT FROM")
 }
 
+// IsLike returns a representation of "a LIKE b"
+func IsLike(lhs, rhs Expression) BoolExpression {
+	return NewBinaryBoolOperatorExpression(lhs, rhs, "LIKE")
+}
+
+// IsNotLike returns a representation of "a NOT LIKE b"
+func IsNotLike(lhs, rhs Expression) BoolExpression {
+	return NewBinaryBoolOperatorExpression(lhs, rhs, "NOT LIKE")
+}
+
+func RegExpLike(lhs, rhs Expression, caseSensitive ...bool) BoolExpression {
+	return NewBinaryBoolOperatorExpression(lhs, rhs, StringRegexpLikeOperator,
+		Bool(len(caseSensitive) > 0 && caseSensitive[0]))
+}
+
+func NotRegExpLike(lhs, rhs Expression, caseSensitive ...bool) BoolExpression {
+	return NewBinaryBoolOperatorExpression(lhs, rhs, StringNotRegexpLikeOperator,
+		Bool(len(caseSensitive) > 0 && caseSensitive[0]))
+}
+
 // Lt returns a representation of "a<b"
 func Lt(lhs Expression, rhs Expression) BoolExpression {
 	return NewBinaryBoolOperatorExpression(lhs, rhs, "<")

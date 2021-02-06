@@ -1,8 +1,9 @@
 package mysql
 
 import (
-	"github.com/go-jet/jet/v2/internal/jet"
 	"time"
+
+	"github.com/go-jet/jet/v2/internal/jet"
 )
 
 // Keywords
@@ -62,4 +63,8 @@ var Timestamp = func(year int, month time.Month, day, hour, minute, second int, 
 // TimestampT creates new timestamp literal from time.Time
 var TimestampT = func(t time.Time) TimestampExpression {
 	return TIMESTAMP(StringExp(jet.TimestampT(t)))
+}
+
+func JSON(value interface{}) JSONExpression {
+	return newJsonLiteral(value)
 }

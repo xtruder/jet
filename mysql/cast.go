@@ -1,8 +1,9 @@
 package mysql
 
 import (
-	"github.com/go-jet/jet/v2/internal/jet"
 	"strconv"
+
+	"github.com/go-jet/jet/v2/internal/jet"
 )
 
 type cast interface {
@@ -24,6 +25,8 @@ type cast interface {
 	AS_UNSIGNED() IntegerExpression
 	// Cast expression as binary type
 	AS_BINARY() StringExpression
+	// Cast expression as json
+	AS_JSON() JSONExpression
 }
 
 type castImpl struct {
@@ -86,4 +89,9 @@ func (c *castImpl) AS_TIME() TimeExpression {
 // AS_BINARY casts expression as BINARY type
 func (c *castImpl) AS_BINARY() StringExpression {
 	return StringExp(c.AS("BINARY"))
+}
+
+// AS_JSON casts expression as JSON type
+func (c *castImpl) AS_JSON() JSONExpression {
+	return JSONExp(c.AS("JSON"))
 }

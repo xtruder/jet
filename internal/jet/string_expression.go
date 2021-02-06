@@ -64,19 +64,19 @@ func (s *stringInterfaceImpl) CONCAT(rhs Expression) StringExpression {
 }
 
 func (s *stringInterfaceImpl) LIKE(pattern StringExpression) BoolExpression {
-	return NewBinaryBoolOperatorExpression(s.parent, pattern, "LIKE")
+	return IsLike(s.parent, pattern)
 }
 
 func (s *stringInterfaceImpl) NOT_LIKE(pattern StringExpression) BoolExpression {
-	return NewBinaryBoolOperatorExpression(s.parent, pattern, "NOT LIKE")
+	return IsNotLike(s.parent, pattern)
 }
 
 func (s *stringInterfaceImpl) REGEXP_LIKE(pattern StringExpression, caseSensitive ...bool) BoolExpression {
-	return NewBinaryBoolOperatorExpression(s.parent, pattern, StringRegexpLikeOperator, Bool(len(caseSensitive) > 0 && caseSensitive[0]))
+	return RegExpLike(s.parent, pattern, caseSensitive...)
 }
 
 func (s *stringInterfaceImpl) NOT_REGEXP_LIKE(pattern StringExpression, caseSensitive ...bool) BoolExpression {
-	return NewBinaryBoolOperatorExpression(s.parent, pattern, StringNotRegexpLikeOperator, Bool(len(caseSensitive) > 0 && caseSensitive[0]))
+	return NotRegExpLike(s.parent, pattern, caseSensitive...)
 }
 
 //---------------------------------------------------//

@@ -1,6 +1,8 @@
 package mysql
 
-import "github.com/go-jet/jet/v2/internal/jet"
+import (
+	"github.com/go-jet/jet/v2/internal/jet"
+)
 
 // ROW is construct one table row from list of expressions.
 var ROW = jet.ROW
@@ -258,3 +260,135 @@ var CASE = jet.CASE
 
 // BIT_NOT inverts every bit in integer expression
 var BIT_NOT = jet.BIT_NOT
+
+//----------------- JSON Functions ------------//
+
+func JSON_EXTRACT(lhs JSONExpression, paths ...StringExpression) JSONExpression {
+	allPaths := []jet.Expression{}
+	for _, path := range paths {
+		allPaths = append(allPaths, path)
+	}
+
+	return newJSONFunc("JSON_EXTRACT", allPaths...)
+}
+
+func JSON_UNQUOTE(lhs JSONExpression) JSONExpression {
+	return newJSONFunc("JSON_UNQUOTE", lhs)
+}
+
+func JSON_ARRAY_APPEND(lhs JSONExpression, path StringExpression, value Expression, pathOrValue ...Expression) JSONExpression {
+	expressions := []Expression{lhs, path, value}
+	expressions = append(expressions, pathOrValue...)
+
+	return newJSONFunc("JSON_ARRAY_APPEND", expressions...)
+}
+
+func JSON_ARRAY_INSERT(lhs JSONExpression, path StringExpression, value Expression, pathOrValue ...Expression) JSONExpression {
+	expressions := []Expression{lhs, path, value}
+	expressions = append(expressions, pathOrValue...)
+
+	return newJSONFunc("JSON_ARRAY_INSERT", expressions...)
+}
+
+func JSON_CONTAINS(lhs JSONExpression, rhs JSONExpression, path StringExpression) BoolExpression {
+	return jet.NewBoolFunc("JSON_CONTAINS", lhs, rhs, path)
+}
+
+func JSON_CONTAINS_PATH(lhs JSONExpression, oneOrAll bool, path StringExpression, paths ...StringExpression) BoolExpression {
+	oneOrAllStr := "one"
+	if oneOrAll {
+		oneOrAllStr = "all"
+	}
+
+	expressions := []Expression{lhs, jet.FixedLiteral(oneOrAllStr), path}
+	for _, path := range paths {
+		expressions = append(expressions, path)
+	}
+
+	return jet.NewBoolFunc("JSON_CONTAINS_PATH", expressions...)
+}
+
+func JSON_DEPTH(lhs JSONExpression) IntegerExpression {
+	return jet.NewIntegerFunc("JSON_DEPTH", lhs)
+}
+
+func JSON_KEYS(lhs JSONExpression, path ...StringExpression) JSONExpression {
+	expressions := []Expression{lhs}
+
+	if len(path) > 0 {
+		expressions = append(expressions, path[0])
+	}
+
+	return newJSONFunc("JSON_KEYS", expressions...)
+}
+
+func JSON_LENGTH(lhs JSONExpression, path ...StringExpression) IntegerExpression {
+	expressions := []Expression{lhs}
+
+	if len(path) > 0 {
+		expressions = append(expressions, path[0])
+	}
+
+	return jet.NewIntegerFunc("JSON_LENGTH", expressions...)
+}
+
+func JSON_MERGE_PATCH(lhs JSONExpression, rhs JSONExpression) JSONExpression {
+	return newJSONFunc("JSON_MERGE_PATCH", lhs, rhs)
+}
+
+func JSON_MERGE_PRESERVE(lhs JSONExpression, rhs JSONExpression) JSONExpression {
+	return newJSONFunc("JSON_MERGE_PRESERVE", lhs, rhs)
+}
+
+func JSON_OVERLAPS(lhs JSONExpression, rhs JSONExpression) BoolExpression {
+	return jet.NewBoolFunc("JSON_OVERLAPS", lhs, rhs)
+}
+
+func JSON_REMOVE(lhs JSONExpression, path StringExpression, paths ...StringExpression) JSONExpression {
+	expressions := []Expression{lhs, path}
+	for _, path := range paths {
+		expressions = append(expressions, path)
+	}
+
+	return newJSONFunc("JSON_REMOVE", expressions...)
+}
+
+func JSON_REPLACE(lhs JSONExpression, path StringExpression, value Expression, pathOrValue ...Expression) JSONExpression {
+	expressions := []Expression{lhs, path, value}
+	expressions = append(expressions, pathOrValue...)
+
+	return newJSONFunc("JSON_REPLACE", expressions...)
+}
+
+func JSON_SCHEMA_VALID(lhs JSONExpression, schema JSONExpression) BoolExpression {
+	return jet.NewBoolFunc("JSON_SCHEMA_VALID", lhs, schema)
+}
+
+func JSON_SCHEMA_VALIDATION_REPORT(lhs JSONExpression, schema JSONExpression) JSONExpression {
+	return newJSONFunc("JSON_SCHEMA_VALIDATION_REPORT", lhs, schema)
+}
+
+func JSON_SEARCH(lhs JSONExpression, oneOrAll bool, searchStr StringExpression, escapeChar StringExpression, paths ...StringExpression) JSONExpression {
+	oneOrAllStr := "one"
+	if oneOrAll {
+		oneOrAllStr = "all"
+	}
+
+	expressions := []Expression{lhs, jet.FixedLiteral(oneOrAllStr), searchStr, escapeChar}
+	for _, path := range paths {
+		expressions = append(expressions, path)
+	}
+
+	return newJSONFunc("JSON_SEARCH", expressions...)
+}
+
+func JSON_SET(lhs JSONExpression, path StringExpression, value Expression, pathOrValue ...Expression) JSONExpression {
+	expressions := []Expression{lhs, path, value}
+	expressions = append(expressions, pathOrValue...)
+
+	return newJSONFunc("JSON_SET", expressions...)
+}
+
+func JSON_TYPE(lhs JSONExpression) StringExpression {
+	return jet.NewStringFunc("JSON_TYPE", lhs)
+}

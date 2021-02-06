@@ -40,3 +40,8 @@ func TestTimestamp(t *testing.T) {
 	assertSerialize(t, Timestamp(2010, time.March, 30, 10, 15, 30), `TIMESTAMP(?)`, "2010-03-30 10:15:30")
 	assertSerialize(t, TimestampT(time.Now()), `TIMESTAMP(?)`)
 }
+
+func TestJSON(t *testing.T) {
+	assertSerialize(t, JSON(map[string]string{"key": "value"}), "?", `{"key":"value"}`)
+	assertSerialize(t, JSON("value"), "?", `"value"`)
+}

@@ -1,9 +1,10 @@
 package mysql
 
 import (
+	"testing"
+
 	"github.com/go-jet/jet/v2/internal/jet"
 	"github.com/go-jet/jet/v2/internal/testutils"
-	"testing"
 )
 
 var table1Col1 = IntegerColumn("col1")
@@ -15,6 +16,7 @@ var table1Col3 = IntegerColumn("col3")
 var table1ColTimestamp = TimestampColumn("col_timestamp")
 var table1ColDate = DateColumn("col_date")
 var table1ColTime = TimeColumn("col_time")
+var table1ColJSON = JSONColumn("col_json")
 
 var table1 = NewTable(
 	"db",
@@ -28,6 +30,7 @@ var table1 = NewTable(
 	table1ColDate,
 	table1ColTimestamp,
 	table1ColTime,
+	table1ColJSON,
 )
 
 var table2Col3 = IntegerColumn("col3")
@@ -38,6 +41,7 @@ var table2ColStr = StringColumn("col_str")
 var table2ColBool = BoolColumn("col_bool")
 var table2ColTimestamp = TimestampColumn("col_timestamp")
 var table2ColDate = DateColumn("col_date")
+var table2ColJSON = JSONColumn("col_json")
 
 var table2 = NewTable(
 	"db",
@@ -50,6 +54,7 @@ var table2 = NewTable(
 	table2ColBool,
 	table2ColDate,
 	table2ColTimestamp,
+	table2ColJSON,
 )
 
 var table3Col1 = IntegerColumn("col1")

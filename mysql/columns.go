@@ -56,3 +56,40 @@ type ColumnTimestamp = jet.ColumnTimestamp
 
 // TimestampColumn creates named timestamp column
 var TimestampColumn = jet.TimestampColumn
+
+//------------------------------------------------------//
+
+// ColumnJSON is interface for SQL json types.
+type ColumnJSON interface {
+	JSONExpression
+	jet.Column
+
+	From(subQuery SelectTable) ColumnJSON
+	SET(jsonExp JSONExpression) ColumnAssigment
+}
+
+type jsonColumnImpl struct {
+	jsonInterfaceImpl
+	jet.ColumnExpression
+}
+
+func (i *jsonColumnImpl) From(subQuery SelectTable) ColumnJSON {
+	newStrColumn := JSONColumn(i.Name())
+	newStrColumn.SetTableName(i.TableName())
+	newStrColumn.SetSubQuery(subQuery)
+
+	return newStrColumn
+}
+
+func (i *jsonColumnImpl) SET(jsonExp JSONExpression) ColumnAssigment {
+	return jet.NewColumnAssigment(i, jsonExp)
+}
+
+// JSONColumn creates named json column.
+func JSONColumn(name string) ColumnJSON {
+	jsonColumn := &jsonColumnImpl{}
+	jsonColumn.jsonInterfaceImpl.parent = jsonColumn
+	jsonColumn.ColumnExpression = jet.NewColumnExpression(name, "", jsonColumn)
+
+	return jsonColumn
+}
