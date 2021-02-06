@@ -25,7 +25,7 @@ type ColumnExpression interface {
 }
 
 // ColumnExpressionImpl is base type for sql columns.
-type ColumnExpressionImpl struct {
+type columnExpressionImpl struct {
 	ExpressionInterfaceImpl
 
 	name      string
@@ -34,9 +34,9 @@ type ColumnExpressionImpl struct {
 	subQuery SelectTable
 }
 
-// NewColumnImpl creates new ColumnExpressionImpl
-func NewColumnImpl(name string, tableName string, parent ColumnExpression) ColumnExpressionImpl {
-	bc := ColumnExpressionImpl{
+// NewColumnExpression creates new ColumnExpressionImpl
+func NewColumnExpression(name string, tableName string, parent ColumnExpression) *columnExpressionImpl {
+	bc := &columnExpressionImpl{
 		name:      name,
 		tableName: tableName,
 	}
@@ -44,31 +44,31 @@ func NewColumnImpl(name string, tableName string, parent ColumnExpression) Colum
 	if parent != nil {
 		bc.ExpressionInterfaceImpl.Parent = parent
 	} else {
-		bc.ExpressionInterfaceImpl.Parent = &bc
+		bc.ExpressionInterfaceImpl.Parent = bc
 	}
 
 	return bc
 }
 
 // Name returns name of the column
-func (c *ColumnExpressionImpl) Name() string {
+func (c *columnExpressionImpl) Name() string {
 	return c.name
 }
 
 // TableName returns column table name
-func (c *ColumnExpressionImpl) TableName() string {
+func (c *columnExpressionImpl) TableName() string {
 	return c.tableName
 }
 
-func (c *ColumnExpressionImpl) SetTableName(table string) {
+func (c *columnExpressionImpl) SetTableName(table string) {
 	c.tableName = table
 }
 
-func (c *ColumnExpressionImpl) SetSubQuery(subQuery SelectTable) {
+func (c *columnExpressionImpl) SetSubQuery(subQuery SelectTable) {
 	c.subQuery = subQuery
 }
 
-func (c *ColumnExpressionImpl) defaultAlias() string {
+func (c *columnExpressionImpl) defaultAlias() string {
 	if c.tableName != "" {
 		return c.tableName + "." + c.name
 	}
@@ -76,14 +76,14 @@ func (c *ColumnExpressionImpl) defaultAlias() string {
 	return c.name
 }
 
-func (c *ColumnExpressionImpl) fromImpl(subQuery SelectTable) Projection {
-	newColumn := NewColumnImpl(c.name, c.tableName, nil)
+func (c *columnExpressionImpl) fromImpl(subQuery SelectTable) Projection {
+	newColumn := NewColumnExpression(c.name, c.tableName, nil)
 	newColumn.SetSubQuery(subQuery)
 
-	return &newColumn
+	return newColumn
 }
 
-func (c *ColumnExpressionImpl) serializeForOrderBy(statement StatementType, out *SQLBuilder) {
+func (c *columnExpressionImpl) serializeForOrderBy(statement StatementType, out *SQLBuilder) {
 	if statement == SetStatementType {
 		// set Statement (UNION, EXCEPT ...) can reference only select projections in order by clause
 		out.WriteAlias(c.defaultAlias()) //always quote
@@ -93,14 +93,14 @@ func (c *ColumnExpressionImpl) serializeForOrderBy(statement StatementType, out 
 	c.Serialize(statement, out)
 }
 
-func (c ColumnExpressionImpl) serializeForProjection(statement StatementType, out *SQLBuilder) {
+func (c columnExpressionImpl) serializeForProjection(statement StatementType, out *SQLBuilder) {
 	c.Serialize(statement, out)
 
 	out.WriteString("AS")
 	out.WriteAlias(c.defaultAlias())
 }
 
-func (c ColumnExpressionImpl) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
+func (c columnExpressionImpl) Serialize(statement StatementType, out *SQLBuilder, options ...SerializeOption) {
 	if c.subQuery != nil {
 		out.WriteIdentifier(c.subQuery.Alias())
 		out.WriteByte('.')

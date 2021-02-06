@@ -11,12 +11,12 @@ type ColumnBool interface {
 
 type boolColumnImpl struct {
 	boolInterfaceImpl
-	ColumnExpressionImpl
+	ColumnExpression
 }
 
 func (i *boolColumnImpl) From(subQuery SelectTable) ColumnBool {
-	newBoolColumn := BoolColumn(i.name)
-	newBoolColumn.SetTableName(i.tableName)
+	newBoolColumn := BoolColumn(i.Name())
+	newBoolColumn.SetTableName(i.TableName())
 	newBoolColumn.SetSubQuery(subQuery)
 
 	return newBoolColumn
@@ -32,7 +32,7 @@ func (i *boolColumnImpl) SET(boolExp BoolExpression) ColumnAssigment {
 // BoolColumn creates named bool column.
 func BoolColumn(name string) ColumnBool {
 	boolColumn := &boolColumnImpl{}
-	boolColumn.ColumnExpressionImpl = NewColumnImpl(name, "", boolColumn)
+	boolColumn.ColumnExpression = NewColumnExpression(name, "", boolColumn)
 	boolColumn.boolInterfaceImpl.parent = boolColumn
 
 	return boolColumn
@@ -51,12 +51,12 @@ type ColumnFloat interface {
 
 type floatColumnImpl struct {
 	floatInterfaceImpl
-	ColumnExpressionImpl
+	ColumnExpression
 }
 
 func (i *floatColumnImpl) From(subQuery SelectTable) ColumnFloat {
-	newFloatColumn := FloatColumn(i.name)
-	newFloatColumn.SetTableName(i.tableName)
+	newFloatColumn := FloatColumn(i.Name())
+	newFloatColumn.SetTableName(i.TableName())
 	newFloatColumn.SetSubQuery(subQuery)
 
 	return newFloatColumn
@@ -73,7 +73,7 @@ func (i *floatColumnImpl) SET(floatExp FloatExpression) ColumnAssigment {
 func FloatColumn(name string) ColumnFloat {
 	floatColumn := &floatColumnImpl{}
 	floatColumn.floatInterfaceImpl.parent = floatColumn
-	floatColumn.ColumnExpressionImpl = NewColumnImpl(name, "", floatColumn)
+	floatColumn.ColumnExpression = NewColumnExpression(name, "", floatColumn)
 
 	return floatColumn
 }
@@ -91,13 +91,12 @@ type ColumnInteger interface {
 
 type integerColumnImpl struct {
 	integerInterfaceImpl
-
-	ColumnExpressionImpl
+	ColumnExpression
 }
 
 func (i *integerColumnImpl) From(subQuery SelectTable) ColumnInteger {
-	newIntColumn := IntegerColumn(i.name)
-	newIntColumn.SetTableName(i.tableName)
+	newIntColumn := IntegerColumn(i.Name())
+	newIntColumn.SetTableName(i.TableName())
 	newIntColumn.SetSubQuery(subQuery)
 
 	return newIntColumn
@@ -114,7 +113,7 @@ func (i *integerColumnImpl) SET(intExp IntegerExpression) ColumnAssigment {
 func IntegerColumn(name string) ColumnInteger {
 	integerColumn := &integerColumnImpl{}
 	integerColumn.integerInterfaceImpl.parent = integerColumn
-	integerColumn.ColumnExpressionImpl = NewColumnImpl(name, "", integerColumn)
+	integerColumn.ColumnExpression = NewColumnExpression(name, "", integerColumn)
 
 	return integerColumn
 }
@@ -133,13 +132,12 @@ type ColumnString interface {
 
 type stringColumnImpl struct {
 	stringInterfaceImpl
-
-	ColumnExpressionImpl
+	ColumnExpression
 }
 
 func (i *stringColumnImpl) From(subQuery SelectTable) ColumnString {
-	newStrColumn := StringColumn(i.name)
-	newStrColumn.SetTableName(i.tableName)
+	newStrColumn := StringColumn(i.Name())
+	newStrColumn.SetTableName(i.TableName())
 	newStrColumn.SetSubQuery(subQuery)
 
 	return newStrColumn
@@ -156,7 +154,7 @@ func (i *stringColumnImpl) SET(stringExp StringExpression) ColumnAssigment {
 func StringColumn(name string) ColumnString {
 	stringColumn := &stringColumnImpl{}
 	stringColumn.stringInterfaceImpl.parent = stringColumn
-	stringColumn.ColumnExpressionImpl = NewColumnImpl(name, "", stringColumn)
+	stringColumn.ColumnExpression = NewColumnExpression(name, "", stringColumn)
 
 	return stringColumn
 }
@@ -174,12 +172,12 @@ type ColumnTime interface {
 
 type timeColumnImpl struct {
 	timeInterfaceImpl
-	ColumnExpressionImpl
+	ColumnExpression
 }
 
 func (i *timeColumnImpl) From(subQuery SelectTable) ColumnTime {
-	newTimeColumn := TimeColumn(i.name)
-	newTimeColumn.SetTableName(i.tableName)
+	newTimeColumn := TimeColumn(i.Name())
+	newTimeColumn.SetTableName(i.TableName())
 	newTimeColumn.SetSubQuery(subQuery)
 
 	return newTimeColumn
@@ -196,7 +194,7 @@ func (i *timeColumnImpl) SET(timeExp TimeExpression) ColumnAssigment {
 func TimeColumn(name string) ColumnTime {
 	timeColumn := &timeColumnImpl{}
 	timeColumn.timeInterfaceImpl.parent = timeColumn
-	timeColumn.ColumnExpressionImpl = NewColumnImpl(name, "", timeColumn)
+	timeColumn.ColumnExpression = NewColumnExpression(name, "", timeColumn)
 	return timeColumn
 }
 
@@ -212,12 +210,12 @@ type ColumnTimez interface {
 
 type timezColumnImpl struct {
 	timezInterfaceImpl
-	ColumnExpressionImpl
+	ColumnExpression
 }
 
 func (i *timezColumnImpl) From(subQuery SelectTable) ColumnTimez {
-	newTimezColumn := TimezColumn(i.name)
-	newTimezColumn.SetTableName(i.tableName)
+	newTimezColumn := TimezColumn(i.Name())
+	newTimezColumn.SetTableName(i.TableName())
 	newTimezColumn.SetSubQuery(subQuery)
 
 	return newTimezColumn
@@ -234,7 +232,7 @@ func (i *timezColumnImpl) SET(timezExp TimezExpression) ColumnAssigment {
 func TimezColumn(name string) ColumnTimez {
 	timezColumn := &timezColumnImpl{}
 	timezColumn.timezInterfaceImpl.parent = timezColumn
-	timezColumn.ColumnExpressionImpl = NewColumnImpl(name, "", timezColumn)
+	timezColumn.ColumnExpression = NewColumnExpression(name, "", timezColumn)
 
 	return timezColumn
 }
@@ -252,12 +250,12 @@ type ColumnTimestamp interface {
 
 type timestampColumnImpl struct {
 	timestampInterfaceImpl
-	ColumnExpressionImpl
+	ColumnExpression
 }
 
 func (i *timestampColumnImpl) From(subQuery SelectTable) ColumnTimestamp {
-	newTimestampColumn := TimestampColumn(i.name)
-	newTimestampColumn.SetTableName(i.tableName)
+	newTimestampColumn := TimestampColumn(i.Name())
+	newTimestampColumn.SetTableName(i.TableName())
 	newTimestampColumn.SetSubQuery(subQuery)
 
 	return newTimestampColumn
@@ -274,7 +272,7 @@ func (i *timestampColumnImpl) SET(timestampExp TimestampExpression) ColumnAssigm
 func TimestampColumn(name string) ColumnTimestamp {
 	timestampColumn := &timestampColumnImpl{}
 	timestampColumn.timestampInterfaceImpl.parent = timestampColumn
-	timestampColumn.ColumnExpressionImpl = NewColumnImpl(name, "", timestampColumn)
+	timestampColumn.ColumnExpression = NewColumnExpression(name, "", timestampColumn)
 
 	return timestampColumn
 }
@@ -292,12 +290,12 @@ type ColumnTimestampz interface {
 
 type timestampzColumnImpl struct {
 	timestampzInterfaceImpl
-	ColumnExpressionImpl
+	ColumnExpression
 }
 
 func (i *timestampzColumnImpl) From(subQuery SelectTable) ColumnTimestampz {
-	newTimestampzColumn := TimestampzColumn(i.name)
-	newTimestampzColumn.SetTableName(i.tableName)
+	newTimestampzColumn := TimestampzColumn(i.Name())
+	newTimestampzColumn.SetTableName(i.TableName())
 	newTimestampzColumn.SetSubQuery(subQuery)
 
 	return newTimestampzColumn
@@ -314,7 +312,7 @@ func (i *timestampzColumnImpl) SET(timestampzExp TimestampzExpression) ColumnAss
 func TimestampzColumn(name string) ColumnTimestampz {
 	timestampzColumn := &timestampzColumnImpl{}
 	timestampzColumn.timestampzInterfaceImpl.parent = timestampzColumn
-	timestampzColumn.ColumnExpressionImpl = NewColumnImpl(name, "", timestampzColumn)
+	timestampzColumn.ColumnExpression = NewColumnExpression(name, "", timestampzColumn)
 
 	return timestampzColumn
 }
@@ -332,12 +330,12 @@ type ColumnDate interface {
 
 type dateColumnImpl struct {
 	dateInterfaceImpl
-	ColumnExpressionImpl
+	ColumnExpression
 }
 
 func (i *dateColumnImpl) From(subQuery SelectTable) ColumnDate {
-	newDateColumn := DateColumn(i.name)
-	newDateColumn.SetTableName(i.tableName)
+	newDateColumn := DateColumn(i.Name())
+	newDateColumn.SetTableName(i.TableName())
 	newDateColumn.SetSubQuery(subQuery)
 
 	return newDateColumn
@@ -354,6 +352,6 @@ func (i *dateColumnImpl) SET(dateExp DateExpression) ColumnAssigment {
 func DateColumn(name string) ColumnDate {
 	dateColumn := &dateColumnImpl{}
 	dateColumn.dateInterfaceImpl.parent = dateColumn
-	dateColumn.ColumnExpressionImpl = NewColumnImpl(name, "", dateColumn)
+	dateColumn.ColumnExpression = NewColumnExpression(name, "", dateColumn)
 	return dateColumn
 }

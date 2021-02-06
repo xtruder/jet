@@ -13,10 +13,10 @@ func newAlias(expression Expression, aliasName string) Projection {
 }
 
 func (a *alias) fromImpl(subQuery SelectTable) Projection {
-	column := NewColumnImpl(a.alias, "", nil)
+	column := NewColumnExpression(a.alias, "", nil)
 	column.subQuery = subQuery
 
-	return &column
+	return column
 }
 
 func (a *alias) serializeForProjection(statement StatementType, out *SQLBuilder) {

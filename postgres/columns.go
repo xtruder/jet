@@ -76,8 +76,8 @@ type ColumnInterval interface {
 }
 
 type intervalColumnImpl struct {
-	jet.ColumnExpressionImpl
 	intervalInterfaceImpl
+	jet.ColumnExpression
 }
 
 func (i *intervalColumnImpl) From(subQuery SelectTable) ColumnInterval {
@@ -91,7 +91,7 @@ func (i *intervalColumnImpl) From(subQuery SelectTable) ColumnInterval {
 // IntervalColumn creates named interval column.
 func IntervalColumn(name string) ColumnInterval {
 	intervalColumn := &intervalColumnImpl{}
-	intervalColumn.ColumnExpressionImpl = jet.NewColumnImpl(name, "", intervalColumn)
 	intervalColumn.intervalInterfaceImpl.parent = intervalColumn
+	intervalColumn.ColumnExpression = jet.NewColumnExpression(name, "", intervalColumn)
 	return intervalColumn
 }
