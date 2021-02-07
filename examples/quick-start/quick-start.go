@@ -4,16 +4,17 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	_ "github.com/lib/pq"
 	"io/ioutil"
+
+	_ "github.com/lib/pq"
 
 	// dot import so that jet go code would resemble as much as native SQL
 	// dot import is not mandatory
-	. "github.com/go-jet/jet/v2/examples/quick-start/.gen/jetdb/dvds/table"
+	. "github.com/go-jet/jet/v2/examples/quick-start/gen/table"
 	. "github.com/go-jet/jet/v2/jet"
 	. "github.com/go-jet/jet/v2/postgres"
 
-	"github.com/go-jet/jet/v2/examples/quick-start/.gen/jetdb/dvds/model"
+	"github.com/go-jet/jet/v2/examples/quick-start/gen/model"
 )
 
 const (
@@ -26,7 +27,7 @@ const (
 
 func main() {
 	// Connect to database
-	var connectString = fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbName)
+	connectString := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbName)
 
 	db, err := sql.Open("postgres", connectString)
 	panicOnError(err)
@@ -55,7 +56,7 @@ func main() {
 	)
 
 	// Execute query and store result
-	var dest []struct {
+	dest := []struct {
 		model.Actor
 
 		Films []struct {
@@ -64,7 +65,7 @@ func main() {
 			Language   model.Language
 			Categories []model.Category
 		}
-	}
+	}{}
 
 	err = stmt.Query(db, &dest)
 	panicOnError(err)
@@ -74,12 +75,12 @@ func main() {
 
 	// New Destination
 
-	var dest2 []struct {
+	dest2 := []struct {
 		model.Category
 
 		Films  []model.Film
 		Actors []model.Actor
-	}
+	}{}
 
 	err = stmt.Query(db, &dest2)
 	panicOnError(err)
@@ -104,7 +105,7 @@ func printStatementInfo(stmt SelectStatement) {
 	fmt.Println("Arguments: ")
 	fmt.Println(args)
 
-	debugSQL := stmt.DebugSql()
+	debugSQL := stmt.String()
 
 	fmt.Println("\n\nDebug sql: ")
 	fmt.Println("==============================")

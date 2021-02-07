@@ -91,7 +91,7 @@ connection parameters and root destination folder path for generated files.\
 Assuming we are running local postgres database, with user `jetuser`, user password `jetpass`, database `jetdb` and 
 schema `dvds` we will use this command:
 ```sh
-jet -source=PostgreSQL -host=localhost -port=5432 -user=jetuser -password=jetpass -dbname=jetdb -schema=dvds -path=./.gen
+jet -source=PostgreSQL -host=localhost -port=5432 -user=jetuser -password=jetpass -dbname=jetdb -schema=dvds -path=./gen
 ```
 ```sh
 Connecting to postgres database: host=localhost port=5432 user=jetuser password=jetpass dbname=jetdb sslmode=disable 
@@ -112,7 +112,7 @@ _*User has to have a permission to read information schema tables._
 
 As command output suggest, Jet will:
 - connect to postgres database and retrieve information about the _tables_, _views_ and _enums_ of `dvds` schema
-- delete everything in schema destination folder -  `./gen/jetdb/dvds`,   
+- delete everything in schema destination folder -  `./gen`,
 - and finally generate SQL Builder and Model files for each schema table, view and enum.  
 
 
@@ -150,11 +150,11 @@ First we need to import jet and generated files from previous step:
 import (
 	// dot import so go code would resemble as much as native SQL
 	// dot import is not mandatory
-	. "github.com/go-jet/jet/v2/examples/quick-start/.gen/jetdb/dvds/table"
+	. "github.com/go-jet/jet/v2/examples/quick-start/gen/table"
 	. "github.com/go-jet/jet/v2/postgres"
 	. "github.com/go-jet/jet/v2/jet"
 
-	"github.com/go-jet/jet/v2/examples/quick-start/gen/jetdb/dvds/model"
+	"github.com/go-jet/jet/v2/examples/quick-start/gen/model"
 )
 ```
 Lets say we want to retrieve the list of all _actors_ that acted in _films_ longer than 180 minutes, _film language_ is 'English' 

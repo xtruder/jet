@@ -3,11 +3,13 @@ package template
 import (
 	"bytes"
 	"fmt"
+	"go/format"
+	"path/filepath"
+	"text/template"
+
 	"github.com/go-jet/jet/v2/generator/internal/metadata"
 	"github.com/go-jet/jet/v2/internal/jet"
 	"github.com/go-jet/jet/v2/internal/utils"
-	"path/filepath"
-	"text/template"
 )
 
 // GenerateFiles generates Go files from tables and enums metadata
@@ -98,10 +100,10 @@ func GenerateTemplate(templateText string, templateData interface{}, dialect jet
 		return nil, err
 	}
 
-	var buf bytes.Buffer
+	buf := bytes.Buffer{}
 	if err := t.Execute(&buf, templateData); err != nil {
 		return nil, err
 	}
 
-	return buf.Bytes(), nil
+	return format.Source(buf.Bytes())
 }

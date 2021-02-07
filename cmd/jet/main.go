@@ -1,21 +1,27 @@
 package main
 
 import (
+	"database/sql"
 	"flag"
 	"fmt"
-	mysqlgen "github.com/go-jet/jet/v2/generator/mysql"
-	postgresgen "github.com/go-jet/jet/v2/generator/postgres"
-	"github.com/go-jet/jet/v2/mysql"
-	"github.com/go-jet/jet/v2/postgres"
-	_ "github.com/go-sql-driver/mysql"
-	_ "github.com/lib/pq"
+	"log"
 	"os"
 	"strings"
+
+	mysqlgen "github.com/go-jet/jet/v2/generator/mysql"
+	postgresgen "github.com/go-jet/jet/v2/generator/postgres"
+	"github.com/go-jet/jet/v2/internal/utils"
+	mysqlutils "github.com/go-jet/jet/v2/internal/utils/mysql"
+	postgresutils "github.com/go-jet/jet/v2/internal/utils/postgres"
+	"github.com/go-jet/jet/v2/mysql"
+	"github.com/go-jet/jet/v2/postgres"
 )
 
 var (
-	source string
+	source  string
+	destDir string
 
+	connString string
 	host       string
 	port       int
 	user       string
@@ -25,12 +31,14 @@ var (
 	dbName     string
 	schemaName string
 
-	destDir string
+	logger = log.New(os.Stderr, "", 0)
 )
 
 func init() {
 	flag.StringVar(&source, "source", "", "Database system name (PostgreSQL, MySQL or MariaDB)")
+	flag.StringVar(&destDir, "path", "", "Destination dir for generated files")
 
+	flag.StringVar(&connString, "connstr", "", "Database connection string")
 	flag.StringVar(&host, "host", "", "Database host path (Example: localhost)")
 	flag.IntVar(&port, "port", 0, "Database port")
 	flag.StringVar(&user, "user", "", "Database user")
@@ -40,11 +48,11 @@ func init() {
 	flag.StringVar(&schemaName, "schema", "public", `Database schema name. (default "public") (ignored for MySQL and MariaDB)`)
 	flag.StringVar(&sslmode, "sslmode", "disable", `Whether or not to use SSL(optional)(default "disable") (ignored for MySQL and MariaDB)`)
 
-	flag.StringVar(&destDir, "path", "", "Destination dir for files generated.")
+	// parse flags from env variables
+	utils.ParseEnv("jet")
 }
 
 func main() {
-
 	flag.Usage = func() {
 		_, _ = fmt.Fprint(os.Stdout, `
 Jet generator 2.3.0
@@ -76,53 +84,55 @@ Usage:
 	flag.Parse()
 
 	if source == "" || host == "" || port == 0 || user == "" || dbName == "" {
-		printErrorAndExit("\nERROR: required flag(s) missing")
+		flag.Usage()
+		logger.Fatalf("\nERROR: required flag(s) missing")
 	}
 
 	var err error
+	var db *sql.DB
 
 	switch strings.ToLower(strings.TrimSpace(source)) {
 	case strings.ToLower(postgres.Dialect.Name()),
 		strings.ToLower(postgres.Dialect.PackageName()):
-		genData := postgresgen.DBConnection{
-			Host:     host,
-			Port:     port,
-			User:     user,
-			Password: password,
-			SslMode:  sslmode,
-			Params:   params,
-
-			DBName:     dbName,
-			SchemaName: schemaName,
+		if sslmode != "" {
+			params += fmt.Sprintf(" sslmode=%s ", sslmode)
 		}
 
-		err = postgresgen.Generate(destDir, genData)
+		db, err = postgresutils.Connect(postgresutils.ConnOptions{
+			User:     user,
+			Password: password,
+			Host:     host,
+			Port:     port,
+			DBName:   dbName,
+			Params:   params,
+		})
+		if err != nil {
+			break
+		}
+
+		err = postgresgen.Generate(db, schemaName, destDir)
 
 	case strings.ToLower(mysql.Dialect.Name()), "mariadb":
-
-		dbConn := mysqlgen.DBConnection{
-			Host:     host,
-			Port:     port,
+		db, err = mysqlutils.Connect(mysqlutils.ConnOptions{
 			User:     user,
 			Password: password,
-			Params:   params,
+			Host:     host,
+			Port:     port,
 			DBName:   dbName,
+			Params:   params,
+		})
+		if err != nil {
+			break
 		}
 
-		err = mysqlgen.Generate(destDir, dbConn)
+		err = mysqlgen.Generate(db, dbName, destDir)
+
 	default:
-		fmt.Println("ERROR: unsupported source " + source + ". " + postgres.Dialect.Name() + " and " + mysql.Dialect.Name() + " are currently supported.")
-		os.Exit(-4)
+		logger.Fatalf("ERROR: unsupported source %s. %s and %s are currently supported.\n",
+			postgres.Dialect.Name(), source, mysql.Dialect.Name())
 	}
 
 	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(-5)
+		logger.Fatalln(err.Error())
 	}
-}
-
-func printErrorAndExit(error string) {
-	fmt.Println(error)
-	flag.Usage()
-	os.Exit(-2)
 }
