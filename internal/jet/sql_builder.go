@@ -10,6 +10,7 @@ import (
 	"unicode"
 
 	"github.com/go-jet/jet/v2/internal/utils"
+	"github.com/go-jet/jet/v2/qrm"
 )
 
 // SerializeOption type
@@ -207,6 +208,10 @@ func argToString(value interface{}) string {
 		return stringQuote(string(bindVal))
 	case time.Time:
 		return stringQuote(bindVal.Format("2006-01-02 15:04:05.999999999Z07:00"))
+	case qrm.JSON:
+		return stringQuote(string(bindVal))
+	case *qrm.JSON:
+		return stringQuote(string(*bindVal))
 	default:
 		if strBindValue, ok := bindVal.(fmt.Stringer); ok {
 			return stringQuote(strBindValue.String())
