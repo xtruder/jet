@@ -116,8 +116,6 @@ func mysqlREGEXPLIKEoperator(expressions ...jet.Serializer) jet.SerializerFunc {
 			panic("jet: invalid number of expressions for operator")
 		}
 
-		expressions[0].Serialize(statement, out, options...)
-
 		caseSensitive := false
 
 		if len(expressions) >= 3 {
@@ -125,6 +123,13 @@ func mysqlREGEXPLIKEoperator(expressions ...jet.Serializer) jet.SerializerFunc {
 				caseSensitive = stringLiteral.Value().(bool)
 			}
 		}
+
+		literal := expressions[0]
+		if caseSensitive {
+			literal = CAST(expressions[0].(Expression)).AS_BINARY()
+		}
+
+		literal.Serialize(statement, out, options...)
 
 		out.WriteString("REGEXP")
 
@@ -142,8 +147,6 @@ func mysqlNOTREGEXPLIKEoperator(expressions ...jet.Serializer) jet.SerializerFun
 			panic("jet: invalid number of expressions for operator")
 		}
 
-		expressions[0].Serialize(statement, out, options...)
-
 		caseSensitive := false
 
 		if len(expressions) >= 3 {
@@ -151,6 +154,13 @@ func mysqlNOTREGEXPLIKEoperator(expressions ...jet.Serializer) jet.SerializerFun
 				caseSensitive = stringLiteral.Value().(bool)
 			}
 		}
+
+		literal := expressions[0]
+		if caseSensitive {
+			literal = CAST(expressions[0].(Expression)).AS_BINARY()
+		}
+
+		literal.Serialize(statement, out, options...)
 
 		out.WriteString("NOT REGEXP")
 
