@@ -3,8 +3,9 @@ package metadata
 import (
 	"database/sql"
 	"fmt"
-	"github.com/go-jet/jet/v2/internal/utils"
 	"strings"
+
+	"github.com/go-jet/jet/v2/internal/utils"
 )
 
 // ColumnMetaData struct
@@ -60,13 +61,17 @@ func (c ColumnMetaData) getSqlBuilderColumnType() string {
 	case "interval":
 		return "Interval"
 	case "USER-DEFINED", "enum", "text", "character", "character varying", "bytea", "uuid",
-		"tsvector", "bit", "bit varying", "money", "json", "jsonb", "xml", "point", "line", "ARRAY",
+		"tsvector", "bit", "bit varying", "money", "xml", "point", "line", "ARRAY",
 		"char", "varchar", "binary", "varbinary",
 		"tinyblob", "blob", "mediumblob", "longblob", "tinytext", "mediumtext", "longtext": // MySQL
 		return "String"
 	case "real", "numeric", "decimal", "double precision", "float",
 		"double": // MySQL
 		return "Float"
+	case "json":
+		return "JSON"
+	case "jsonb":
+		return "JSONB"
 	default:
 		fmt.Println("- [SQL Builder] Unsupported sql column '" + c.Name + " " + c.DataType + "', using StringColumn instead.")
 		return "String"
@@ -96,7 +101,7 @@ func (c ColumnMetaData) getGoBaseType() string {
 	case "bytea",
 		"binary", "varbinary", "tinyblob", "blob", "mediumblob", "longblob": //MySQL
 		return "[]byte"
-	case "text", "character", "character varying", "tsvector", "bit", "bit varying", "money", "json", "jsonb",
+	case "text", "character", "character varying", "tsvector", "bit", "bit varying", "money",
 		"xml", "point", "interval", "line", "ARRAY",
 		"char", "varchar", "tinytext", "mediumtext", "longtext": // MySQL
 		return "string"
@@ -107,6 +112,8 @@ func (c ColumnMetaData) getGoBaseType() string {
 		return "float64"
 	case "uuid":
 		return "uuid.UUID"
+	case "json", "jsonb":
+		return "qrm.JSON"
 	default:
 		fmt.Println("- [Model      ] Unsupported sql column '" + c.Name + " " + c.DataType + "', using string instead.")
 		return "string"

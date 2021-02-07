@@ -2,8 +2,9 @@ package metadata
 
 import (
 	"database/sql"
-	"github.com/go-jet/jet/v2/internal/utils"
 	"strings"
+
+	"github.com/go-jet/jet/v2/internal/utils"
 )
 
 // TableMetaData metadata struct
@@ -51,6 +52,8 @@ func (t TableMetaData) GetImports() []string {
 			imports["time.Time"] = "time"
 		case "uuid.UUID":
 			imports["uuid.UUID"] = "github.com/google/uuid"
+		case "qrm.JSON":
+			imports["qrm"] = "github.com/go-jet/jet/v2/qrm"
 		}
 	}
 
