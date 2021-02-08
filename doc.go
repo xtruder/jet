@@ -25,8 +25,8 @@ Sample command:
 	jet -source=PostgreSQL -host=localhost -port=5432 -user=jet -password=pass -dbname=jetdb -schema=dvds -path=./gen
 
 Then next step is to import generated SQL Builder and Model files and write SQL queries in Go:
-	import . "some_path/.gen/jetdb/dvds/table"
-	import "some_path/.gen/jetdb/dvds/model"
+	import . "some_path/gen/table"
+	import "some_path/gen/model"
 
 To write SQL queries for PostgreSQL import:
 	. "github.com/go-jet/jet/v2/postgres"

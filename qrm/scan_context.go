@@ -4,9 +4,10 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"fmt"
-	"github.com/go-jet/jet/v2/internal/utils"
 	"reflect"
 	"strings"
+
+	"github.com/go-jet/jet/v2/internal/utils"
 )
 
 type scanContext struct {
@@ -192,20 +193,24 @@ func (s *scanContext) getGroupKeyInfo(structType reflect.Type, parentField *refl
 
 func (s *scanContext) typeToColumnIndex(typeName, fieldName string) int {
 	var key string
+	var index int
+	var ok bool
 
+	// if typeName is provided match field by typeName.fieldName
 	if typeName != "" {
 		key = strings.ToLower(typeName + "." + fieldName)
-	} else {
-		key = strings.ToLower(fieldName)
+		if index, ok = s.commonIdentToColumnIndex[key]; ok {
+			return index
+		}
 	}
 
-	index, ok := s.commonIdentToColumnIndex[key]
-
-	if !ok {
-		return -1
+	// match by fieldName in all cases
+	key = strings.ToLower(fieldName)
+	if index, ok = s.commonIdentToColumnIndex[key]; ok {
+		return index
 	}
 
-	return index
+	return -1
 }
 
 func (s *scanContext) rowElem(index int) interface{} {
