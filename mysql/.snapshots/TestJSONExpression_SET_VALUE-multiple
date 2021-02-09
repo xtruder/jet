@@ -1,0 +1,7 @@
+JSON_SET(table2.col_json, ?, ?, ?, ?)
+([]interface {}) (len=4) {
+  (string) (len=6) "$.key1",
+  (string) (len=5) "value",
+  (string) (len=6) "$.key2",
+  (int64) 2
+}

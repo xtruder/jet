@@ -1,0 +1,2 @@
+array_to_json(table2.col_array)
+([]interface {}) <nil>

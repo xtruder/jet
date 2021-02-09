@@ -2,32 +2,28 @@ package postgres
 
 import (
 	"context"
-	"github.com/go-jet/jet/v2/internal/testutils"
-	. "github.com/go-jet/jet/v2/postgres"
-	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/test_sample/model"
-	. "github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/test_sample/table"
-	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
+
+	. "github.com/go-jet/jet/v2/postgres"
+	"github.com/go-jet/jet/v2/tests/postgres/gen/test_sample/model"
+	. "github.com/go-jet/jet/v2/tests/postgres/gen/test_sample/table"
+	"github.com/stretchr/testify/require"
+	"github.com/xtruder/go-testparrot"
 )
 
 func TestUpdateValues(t *testing.T) {
 	setupLinkTableForUpdateTest(t)
 
 	t.Run("deprecated version", func(t *testing.T) {
-		query := Link.
+		stmt := Link.
 			UPDATE(Link.Name, Link.URL).
 			SET("Bong", "http://bong.com").
 			WHERE(Link.Name.EQ(String("Bing")))
 
-		testutils.AssertDebugStatementSql(t, query, `
-UPDATE test_sample.link
-SET (name, url) = ('Bong', 'http://bong.com')
-WHERE link.name = 'Bing';
-`, "Bong", "http://bong.com", "Bing")
+		require.Equal(t, testparrot.RecordNext(t, stmt.String()), stmt.String())
 
-		testutils.AssertExec(t, query, db, 1)
-		requireLogged(t, query)
+		assertExec(t, stmt, 1)
 
 		links := []model.Link{}
 
@@ -38,13 +34,7 @@ WHERE link.name = 'Bing';
 		err := selQuery.Query(db, &links)
 
 		require.NoError(t, err)
-		require.Equal(t, len(links), 1)
-		testutils.AssertDeepEqual(t, links[0], model.Link{
-			ID:   204,
-			URL:  "http://bong.com",
-			Name: "Bong",
-		})
-		requireLogged(t, selQuery)
+		require.EqualValues(t, testparrot.RecordNext(t, links), links)
 	})
 
 	t.Run("new version", func(t *testing.T) {
@@ -55,14 +45,9 @@ WHERE link.name = 'Bing';
 			).
 			WHERE(Link.Name.EQ(String("Yahoo")))
 
-		testutils.AssertDebugStatementSql(t, stmt, `
-UPDATE test_sample.link
-SET name = 'DuckDuckGo',
-    url = 'www.duckduckgo.com'
-WHERE link.name = 'Yahoo';
-`)
-		testutils.AssertExec(t, stmt, db, 1)
-		requireLogged(t, stmt)
+		require.Equal(t, testparrot.RecordNext(t, stmt.String()), stmt.String())
+
+		assertExec(t, stmt, 1)
 	})
 }
 
@@ -70,7 +55,7 @@ func TestUpdateWithSubQueries(t *testing.T) {
 	setupLinkTableForUpdateTest(t)
 
 	t.Run("deprecated version", func(t *testing.T) {
-		query := Link.
+		stmt := Link.
 			UPDATE(Link.Name, Link.URL).
 			SET(
 				SELECT(String("Bong")),
@@ -80,25 +65,13 @@ func TestUpdateWithSubQueries(t *testing.T) {
 			).
 			WHERE(Link.Name.EQ(String("Bing")))
 
-		expectedSQL := `
-UPDATE test_sample.link
-SET (name, url) = ((
-     SELECT 'Bong'
-), (
-     SELECT link.url AS "link.url"
-     FROM test_sample.link
-     WHERE link.name = 'Bing'
-))
-WHERE link.name = 'Bing';
-`
-		testutils.AssertDebugStatementSql(t, query, expectedSQL, "Bong", "Bing", "Bing")
+		require.Equal(t, testparrot.RecordNext(t, stmt.String()), stmt.String())
 
-		AssertExec(t, query, 1)
-		requireLogged(t, query)
+		assertExec(t, stmt, 1)
 	})
 
 	t.Run("new version", func(t *testing.T) {
-		query := Link.UPDATE().
+		stmt := Link.UPDATE().
 			SET(
 				Link.Name.SET(String("Bong")),
 				Link.URL.SET(StringExp(
@@ -109,34 +82,15 @@ WHERE link.name = 'Bing';
 			).
 			WHERE(Link.Name.EQ(String("Bing")))
 
-		testutils.AssertStatementSql(t, query, `
-UPDATE test_sample.link
-SET name = $1,
-    url = (
-         SELECT link.url AS "link.url"
-         FROM test_sample.link
-         WHERE link.name = $2
-    )
-WHERE link.name = $3;
-`, "Bong", "Bing", "Bing")
-		_, err := query.Exec(db)
+		require.Equal(t, testparrot.RecordNext(t, stmt.String()), stmt.String())
+
+		_, err := stmt.Exec(db)
 		require.NoError(t, err)
-		requireLogged(t, query)
 	})
 }
 
 func TestUpdateAndReturning(t *testing.T) {
 	setupLinkTableForUpdateTest(t)
-
-	expectedSQL := `
-UPDATE test_sample.link
-SET (name, url) = ('DuckDuckGo', 'http://www.duckduckgo.com')
-WHERE link.name = 'Ask'
-RETURNING link.id AS "link.id",
-          link.url AS "link.url",
-          link.name AS "link.name",
-          link.description AS "link.description";
-`
 
 	stmt := Link.
 		UPDATE(Link.Name, Link.URL).
@@ -144,21 +98,15 @@ RETURNING link.id AS "link.id",
 		WHERE(Link.Name.EQ(String("Ask"))).
 		RETURNING(Link.AllColumns)
 
-	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, "DuckDuckGo", "http://www.duckduckgo.com", "Ask")
+	require.Equal(t, testparrot.RecordNext(t, stmt.String()), stmt.String())
 
 	links := []model.Link{}
 
-	err := stmt.Query(db, &links)
-
-	require.NoError(t, err)
-	require.Equal(t, len(links), 2)
-	require.Equal(t, links[0].Name, "DuckDuckGo")
-	require.Equal(t, links[1].Name, "DuckDuckGo")
-	requireLogged(t, stmt)
+	require.NoError(t, stmt.Query(db, &links))
+	require.EqualValues(t, testparrot.RecordNext(t, links), links)
 }
 
 func TestUpdateWithSelect(t *testing.T) {
-
 	t.Run("deprecated version", func(t *testing.T) {
 		stmt := Link.UPDATE(Link.AllColumns).
 			SET(
@@ -168,21 +116,9 @@ func TestUpdateWithSelect(t *testing.T) {
 			).
 			WHERE(Link.ID.EQ(Int(0)))
 
-		expectedSQL := `
-UPDATE test_sample.link
-SET (id, url, name, description) = (
-     SELECT link.id AS "link.id",
-          link.url AS "link.url",
-          link.name AS "link.name",
-          link.description AS "link.description"
-     FROM test_sample.link
-     WHERE link.id = 0
-)
-WHERE link.id = 0;
-`
-		testutils.AssertDebugStatementSql(t, stmt, expectedSQL, int64(0), int64(0))
+		require.Equal(t, testparrot.RecordNext(t, stmt.String()), stmt.String())
 
-		AssertExec(t, stmt, 1)
+		assertExec(t, stmt, 1)
 	})
 
 	t.Run("new version", func(t *testing.T) {
@@ -196,24 +132,13 @@ WHERE link.id = 0;
 			).
 			WHERE(Link.ID.EQ(Int(0)))
 
-		testutils.AssertDebugStatementSql(t, stmt, `
-UPDATE test_sample.link
-SET (url, name, description) = (
-         SELECT link.url AS "link.url",
-              link.name AS "link.name",
-              link.description AS "link.description"
-         FROM test_sample.link
-         WHERE link.id = 0
-    )
-WHERE link.id = 0;
-`, int64(0), int64(0))
+		require.Equal(t, testparrot.RecordNext(t, stmt.String()), stmt.String())
 
-		AssertExec(t, stmt, 1)
+		assertExec(t, stmt, 1)
 	})
 }
 
 func TestUpdateWithInvalidSelect(t *testing.T) {
-
 	t.Run("deprecated version", func(t *testing.T) {
 		stmt := Link.UPDATE(Link.AllColumns).
 			SET(
@@ -223,19 +148,10 @@ func TestUpdateWithInvalidSelect(t *testing.T) {
 			).
 			WHERE(Link.ID.EQ(Int(0)))
 
-		var expectedSQL = `
-UPDATE test_sample.link
-SET (id, url, name, description) = (
-     SELECT link.id AS "link.id",
-          link.name AS "link.name"
-     FROM test_sample.link
-     WHERE link.id = 0
-)
-WHERE link.id = 0;
-`
-		testutils.AssertDebugStatementSql(t, stmt, expectedSQL, int64(0), int64(0))
+		require.Equal(t, testparrot.RecordNext(t, stmt.String()), stmt.String())
 
-		testutils.AssertExecErr(t, stmt, db, "pq: number of columns does not match number of values")
+		_, err := stmt.Exec(db)
+		require.Error(t, err, "pq: number of columns does not match number of values")
 	})
 
 	t.Run("new version", func(t *testing.T) {
@@ -243,7 +159,10 @@ WHERE link.id = 0;
 			SET(Link.AllColumns.SET(Link.SELECT(Link.MutableColumns))).
 			WHERE(Link.ID.EQ(Int(0)))
 
-		testutils.AssertExecErr(t, stmt, db, "pq: number of columns does not match number of values")
+		require.Equal(t, testparrot.RecordNext(t, stmt.String()), stmt.String())
+
+		_, err := stmt.Exec(db)
+		require.Error(t, err, "pq: number of columns does not match number of values")
 	})
 }
 
@@ -261,18 +180,12 @@ func TestUpdateWithModelData(t *testing.T) {
 		MODEL(link).
 		WHERE(Link.ID.EQ(Int(int64(link.ID))))
 
-	expectedSQL := `
-UPDATE test_sample.link
-SET (id, url, name, description) = (201, 'http://www.duckduckgo.com', 'DuckDuckGo', NULL)
-WHERE link.id = 201;
-`
-	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, int32(201), "http://www.duckduckgo.com", "DuckDuckGo", nil, int64(201))
+	require.Equal(t, testparrot.RecordNext(t, stmt.String()), stmt.String())
 
-	AssertExec(t, stmt, 1)
+	assertExec(t, stmt, 1)
 }
 
 func TestUpdateWithModelDataAndPredefinedColumnList(t *testing.T) {
-
 	setupLinkTableForUpdateTest(t)
 
 	link := model.Link{
@@ -288,14 +201,9 @@ func TestUpdateWithModelDataAndPredefinedColumnList(t *testing.T) {
 		MODEL(link).
 		WHERE(Link.ID.EQ(Int(int64(link.ID))))
 
-	var expectedSQL = `
-UPDATE test_sample.link
-SET (description, name, url) = (NULL, 'DuckDuckGo', 'http://www.duckduckgo.com')
-WHERE link.id = 201;
-`
-	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, nil, "DuckDuckGo", "http://www.duckduckgo.com", int64(201))
+	require.Equal(t, testparrot.RecordNext(t, stmt.String()), stmt.String())
 
-	AssertExec(t, stmt, 1)
+	assertExec(t, stmt, 1)
 }
 
 func TestUpdateWithInvalidModelData(t *testing.T) {
@@ -324,14 +232,10 @@ func TestUpdateWithInvalidModelData(t *testing.T) {
 		MODEL(link).
 		WHERE(Link.ID.EQ(Int(int64(link.Ident))))
 
-	var expectedSQL = `
-UPDATE test_sample.link
-SET (id, url, name, description, rel) = ('http://www.duckduckgo.com', 'DuckDuckGo', NULL, NULL)
-WHERE link.id = 201;
-`
-	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, "http://www.duckduckgo.com", "DuckDuckGo", nil, nil, int64(201))
+	require.Equal(t, testparrot.RecordNext(t, stmt.String()), stmt.String())
 
-	testutils.AssertExecErr(t, stmt, db, "pq: number of columns does not match number of values")
+	_, err := stmt.Exec(db)
+	require.Error(t, err, "pq: number of columns does not match number of values")
 }
 
 func TestUpdateQueryContext(t *testing.T) {
@@ -372,7 +276,6 @@ func TestUpdateExecContext(t *testing.T) {
 }
 
 func setupLinkTableForUpdateTest(t *testing.T) {
-
 	cleanUpLinkTable(t)
 
 	_, err := Link.INSERT(Link.ID, Link.URL, Link.Name, Link.Description).

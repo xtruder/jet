@@ -1,0 +1,4 @@
+INTERVAL ? DAY_SECOND
+([]interface {}) (len=1) {
+  (string) (len=11) "10 25:15:08"
+}

@@ -1,0 +1,9 @@
+
+UPDATE db.table1
+SET col_int = $1
+WHERE table1.col_int >= $2;
+
+([]interface {}) (len=2) {
+  (int) 1,
+  (int64) 33
+}

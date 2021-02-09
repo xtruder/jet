@@ -1,0 +1,4 @@
+CAST(? AS DATETIME)
+([]interface {}) (len=1) {
+  (time.Time) 1999-01-08 13:05:06 +0100 CET
+}

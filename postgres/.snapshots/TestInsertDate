@@ -1,0 +1,7 @@
+
+INSERT INTO db.table1 (col_time)
+VALUES ($1);
+
+([]interface {}) (len=1) {
+  (time.Time) 1999-01-02 03:04:05 +0000 UTC
+}

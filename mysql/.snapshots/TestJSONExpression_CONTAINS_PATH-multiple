@@ -1,0 +1,5 @@
+JSON_CONTAINS_PATH(table2.col_json, 'all', ?, ?)
+([]interface {}) (len=2) {
+  (string) (len=6) "$.key1",
+  (string) (len=6) "$.key2"
+}

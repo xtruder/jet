@@ -1,0 +1,4 @@
+INTERVAL ? DAY_MICROSECOND
+([]interface {}) (len=1) {
+  (string) (len=18) "10 25:15:08.000100"
+}

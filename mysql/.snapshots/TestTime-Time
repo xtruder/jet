@@ -1,0 +1,4 @@
+CAST(? AS TIME)
+([]interface {}) (len=1) {
+  (string) (len=8) "10:15:30"
+}

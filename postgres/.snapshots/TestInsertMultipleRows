@@ -1,0 +1,14 @@
+
+INSERT INTO db.table1 (col1, col_float)
+VALUES ($1, $2),
+       ($3, $4),
+       ($5, $6);
+
+([]interface {}) (len=6) {
+  (int) 1,
+  (int) 2,
+  (int) 11,
+  (int) 22,
+  (int) 111,
+  (int) 222
+}

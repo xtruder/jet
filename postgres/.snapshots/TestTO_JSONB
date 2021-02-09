@@ -1,0 +1,2 @@
+to_jsonb(table2.col_str)
+([]interface {}) <nil>

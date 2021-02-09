@@ -1,0 +1,3 @@
+
+ON CONFLICT (col_bool) ON CONSTRAINT table_pkey DO NOTHING
+([]interface {}) <nil>

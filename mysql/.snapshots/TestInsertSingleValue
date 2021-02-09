@@ -1,0 +1,7 @@
+
+INSERT INTO db.table1 (col1)
+VALUES (?);
+
+([]interface {}) (len=1) {
+  (int) 1
+}

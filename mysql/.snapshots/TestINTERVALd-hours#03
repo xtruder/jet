@@ -1,0 +1,4 @@
+INTERVAL ? DAY_HOUR
+([]interface {}) (len=1) {
+  (string) (len=4) "3 04"
+}

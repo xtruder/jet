@@ -1,0 +1,12 @@
+
+(
+     SELECT table1.col_bool AS "table1.col_bool"
+     FROM db.table1
+)
+UNION
+(
+     SELECT table2.col_bool AS "table2.col_bool"
+     FROM db.table2
+);
+
+([]interface {}) <nil>

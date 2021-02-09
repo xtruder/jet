@@ -1,0 +1,4 @@
+$1::text
+([]interface {}) (len=1) {
+  (string) (len=4) "test"
+}

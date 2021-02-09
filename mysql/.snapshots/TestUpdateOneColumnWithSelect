@@ -1,0 +1,11 @@
+
+UPDATE db.table1
+SET col_float = (
+         SELECT table1.col_float AS "table1.col_float"
+         FROM db.table1
+    )
+WHERE table1.col1 = ?;
+
+([]interface {}) (len=1) {
+  (int64) 2
+}

@@ -1,0 +1,5 @@
+JSON_SET(table2.col_json, ?, ?)
+([]interface {}) (len=2) {
+  (string) (len=4) "$.id",
+  (string) (len=3) "abc"
+}

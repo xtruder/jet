@@ -1,21 +1,19 @@
 package mysql
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/go-jet/jet/v2/internal/testutils"
+)
 
 func TestLockRead(t *testing.T) {
-	assertStatementSql(t, table2.LOCK().READ(), `
-LOCK TABLES db.table2 READ;
-`)
+	testutils.StatementTest{Test: table2.LOCK().READ()}.Assert(t)
 }
 
 func TestLockWrite(t *testing.T) {
-	assertStatementSql(t, table2.LOCK().WRITE(), `
-LOCK TABLES db.table2 WRITE;
-`)
+	testutils.StatementTest{Test: table2.LOCK().WRITE()}.Assert(t)
 }
 
 func TestUNLOCK_TABLES(t *testing.T) {
-	assertStatementSql(t, UNLOCK_TABLES(), `
-UNLOCK TABLES;
-`)
+	testutils.StatementTest{Test: UNLOCK_TABLES()}.Assert(t)
 }

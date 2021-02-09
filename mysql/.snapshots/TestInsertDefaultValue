@@ -1,0 +1,7 @@
+
+INSERT INTO db.table1 (col1, col_float)
+VALUES (DEFAULT, ?);
+
+([]interface {}) (len=1) {
+  (string) (len=3) "two"
+}

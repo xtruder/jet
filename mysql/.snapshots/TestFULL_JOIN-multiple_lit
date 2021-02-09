@@ -1,0 +1,7 @@
+db.table1
+FULL JOIN db.table2 ON (table1.col_int = ?)
+FULL JOIN db.table3 ON (table1.col_int = ?)
+([]interface {}) (len=2) {
+  (int64) 1,
+  (int64) 2
+}

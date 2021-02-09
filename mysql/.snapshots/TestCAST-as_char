@@ -1,0 +1,4 @@
+CAST(? AS CHAR)
+([]interface {}) (len=1) {
+  (int64) 22
+}

@@ -1,0 +1,4 @@
+ARRAY[ table2.col_str,$1 ]
+([]interface {}) (len=1) {
+  (string) (len=4) "test"
+}

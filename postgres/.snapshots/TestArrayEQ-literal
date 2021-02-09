@@ -1,0 +1,6 @@
+(table2.col_array = $1)
+([]interface {}) (len=1) {
+  (*pq.StringArray)((len=1) {
+    (string) (len=4) "JOHN"
+  })
+}

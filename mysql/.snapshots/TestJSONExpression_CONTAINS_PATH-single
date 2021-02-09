@@ -1,0 +1,4 @@
+JSON_CONTAINS_PATH(table2.col_json, 'one', ?)
+([]interface {}) (len=1) {
+  (string) (len=4) "$.id"
+}

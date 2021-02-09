@@ -1,7 +1,11 @@
 package postgres
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/go-jet/jet/v2/internal/testutils"
+)
 
 func TestOperatorARRAY(t *testing.T) {
-	assertSerialize(t, ARRAY(table2ColStr, String("test")), "ARRAY[ table2.col_str,$1 ]", "test")
+	testutils.SerializerTest{Test: ARRAY(table2ColStr, String("test"))}.Assert(t, Dialect)
 }

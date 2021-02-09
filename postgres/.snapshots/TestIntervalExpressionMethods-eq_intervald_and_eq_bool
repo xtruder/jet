@@ -1,0 +1,4 @@
+((table1.col_interval = INTERVAL '11 MINUTE') = $1)
+([]interface {}) (len=1) {
+  (bool) false
+}

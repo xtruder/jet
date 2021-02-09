@@ -2,82 +2,89 @@ package postgres
 
 import (
 	"testing"
+
+	"github.com/go-jet/jet/v2/internal/testutils"
 )
 
 func TestExpressionCAST_AS(t *testing.T) {
-	assertSerialize(t, CAST(String("test")).AS("text"), `$1::text`, "test")
+	testutils.SerializerTest{Test: CAST(String("test")).AS("text")}.Assert(t, Dialect)
 }
 
 func TestExpressionCAST_AS_BOOL(t *testing.T) {
-	assertSerialize(t, CAST(Int(1)).AS_BOOL(), "$1::boolean", int64(1))
-	assertSerialize(t, CAST(table2Col3).AS_BOOL(), "table2.col3::boolean")
-	assertSerialize(t, CAST(table2Col3.ADD(table2Col3)).AS_BOOL(), "(table2.col3 + table2.col3)::boolean")
+	testutils.SerializerTests{
+		{Name: "literal", Test: CAST(Int(1)).AS_BOOL()},
+		{Name: "column", Test: CAST(table2Col3).AS_BOOL()},
+		{Name: "expression", Test: CAST(table2Col3.ADD(table2Col3)).AS_BOOL()},
+	}.Run(t, Dialect)
 }
 
 func TestExpressionCAST_AS_SMALLINT(t *testing.T) {
-	assertSerialize(t, CAST(table2Col3).AS_SMALLINT(), "table2.col3::smallint")
+	testutils.SerializerTest{Test: CAST(table2Col3).AS_SMALLINT()}.Assert(t, Dialect)
 }
 
 func TestExpressionCAST_AS_INTEGER(t *testing.T) {
-	assertSerialize(t, CAST(table2Col3).AS_INTEGER(), "table2.col3::integer")
+	testutils.SerializerTest{Test: CAST(table2Col3).AS_INTEGER()}.Assert(t, Dialect)
 }
 
 func TestExpressionCAST_AS_BIGINT(t *testing.T) {
-	assertSerialize(t, CAST(table2Col3).AS_BIGINT(), "table2.col3::bigint")
+	testutils.SerializerTest{Test: CAST(table2Col3).AS_BIGINT()}.Assert(t, Dialect)
 }
 
 func TestExpressionCAST_AS_NUMERIC(t *testing.T) {
-	assertSerialize(t, CAST(table2Col3).AS_NUMERIC(11, 11), "table2.col3::numeric(11, 11)")
-	assertSerialize(t, CAST(table2Col3).AS_NUMERIC(11), "table2.col3::numeric(11)")
+	testutils.SerializerTests{
+		{Name: "precision", Test: CAST(table2Col3).AS_NUMERIC(11)},
+		{Name: "precision and scale", Test: CAST(table2Col3).AS_NUMERIC(11, 11)},
+	}.Run(t, Dialect)
 }
 
 func TestExpressionCAST_AS_REAL(t *testing.T) {
-	assertSerialize(t, CAST(table2Col3).AS_REAL(), "table2.col3::real")
+	testutils.SerializerTest{Test: CAST(table2Col3).AS_REAL()}.Assert(t, Dialect)
 }
 
 func TestExpressionCAST_AS_DOUBLE(t *testing.T) {
-	assertSerialize(t, CAST(table2Col3).AS_DOUBLE(), "table2.col3::double precision")
+	testutils.SerializerTest{Test: CAST(table2Col3).AS_DOUBLE()}.Assert(t, Dialect)
 }
 
 func TestExpressionCAST_AS_TEXT(t *testing.T) {
-	assertSerialize(t, CAST(table2Col3).AS_TEXT(), "table2.col3::text")
+	testutils.SerializerTest{Test: CAST(table2Col3).AS_TEXT()}.Assert(t, Dialect)
 }
 
 func TestExpressionCAST_AS_DATE(t *testing.T) {
-	assertSerialize(t, CAST(table2Col3).AS_DATE(), "table2.col3::date")
+	testutils.SerializerTest{Test: CAST(table2Col3).AS_DATE()}.Assert(t, Dialect)
 }
 
 func TestExpressionCAST_AS_TIME(t *testing.T) {
-	assertSerialize(t, CAST(table2Col3).AS_TIME(), "table2.col3::time without time zone")
+	testutils.SerializerTest{Test: CAST(table2Col3).AS_TIME()}.Assert(t, Dialect)
 }
 
 func TestExpressionCAST_AS_TIMEZ(t *testing.T) {
-	assertSerialize(t, CAST(table2Col3).AS_TIMEZ(), "table2.col3::time with time zone")
+	testutils.SerializerTest{Test: CAST(table2Col3).AS_TIMEZ()}.Assert(t, Dialect)
 }
 
 func TestExpressionCAST_AS_TIMESTAMP(t *testing.T) {
-	assertSerialize(t, CAST(table2Col3).AS_TIMESTAMP(), "table2.col3::timestamp without time zone")
+	testutils.SerializerTest{Test: CAST(table2Col3).AS_TIMESTAMP()}.Assert(t, Dialect)
 }
 
 func TestExpressionCAST_AS_TIMESTAMPZ(t *testing.T) {
-	assertSerialize(t, CAST(table2Col3).AS_TIMESTAMPZ(), "table2.col3::timestamp with time zone")
+	testutils.SerializerTest{Test: CAST(table2Col3).AS_TIMESTAMPZ()}.Assert(t, Dialect)
 }
 
 func TestExpressionCAST_AS_INTERVAL(t *testing.T) {
-	assertSerialize(t, CAST(table2ColTimez).AS_INTERVAL(), "table2.col_timez::interval")
-	assertSerialize(t, CAST(Time(20, 11, 10)).AS_INTERVAL(), "$1::time without time zone::interval", "20:11:10")
-	assertSerialize(t, table2ColDate.SUB(CAST(Time(20, 11, 10)).AS_INTERVAL()),
-		"(table2.col_date - $1::time without time zone::interval)", "20:11:10")
+	testutils.SerializerTests{
+		{Name: "column", Test: CAST(table2ColTimez).AS_INTERVAL()},
+		{Name: "literal", Test: CAST(Time(20, 11, 10)).AS_INTERVAL()},
+		{Name: "expression", Test: table2ColDate.SUB(CAST(Time(20, 11, 10)).AS_INTERVAL())},
+	}.Run(t, Dialect)
 }
 
 func TestExpressionCAST_AS_ARRAY(t *testing.T) {
-	assertSerialize(t, CAST(table2ColStr).AS_ARRAY("text"), "table2.col_str::text[]")
+	testutils.SerializerTest{Test: CAST(table2ColStr).AS_ARRAY("text")}.Assert(t, Dialect)
 }
 
 func TestExpressionCAST_AS_JSON(t *testing.T) {
-	assertSerialize(t, CAST(table2ColStr).AS_JSON(), "table2.col_str::json")
+	testutils.SerializerTest{Test: CAST(table2ColStr).AS_JSON()}.Assert(t, Dialect)
 }
 
 func TestExpressionCAST_AS_JSONB(t *testing.T) {
-	assertSerialize(t, CAST(table2ColStr).AS_JSONB(), "table2.col_str::jsonb")
+	testutils.SerializerTest{Test: CAST(table2ColStr).AS_JSONB()}.Assert(t, Dialect)
 }

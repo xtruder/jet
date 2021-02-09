@@ -1,0 +1,2 @@
+INTERVAL table1.col_float QUARTER
+([]interface {}) <nil>

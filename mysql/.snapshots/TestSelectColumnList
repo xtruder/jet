@@ -1,0 +1,7 @@
+
+SELECT table2.col_int AS "table2.col_int",
+     table2.col_float AS "table2.col_float",
+     table3.col_int AS "table3.col_int"
+FROM db.table2;
+
+([]interface {}) <nil>

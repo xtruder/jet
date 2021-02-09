@@ -1,0 +1,2 @@
+(NOT(table1.col_bool <=> table2.col_bool))
+([]interface {}) <nil>

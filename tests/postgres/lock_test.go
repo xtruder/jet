@@ -2,19 +2,17 @@ package postgres
 
 import (
 	"context"
-	"github.com/go-jet/jet/v2/internal/testutils"
-	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+	"github.com/xtruder/go-testparrot"
+
 	. "github.com/go-jet/jet/v2/postgres"
-	. "github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/table"
+	. "github.com/go-jet/jet/v2/tests/postgres/gen/dvds/table"
 )
 
 func TestLockTable(t *testing.T) {
-	expectedSQL := `
-LOCK TABLE dvds.address IN`
-
 	var testData = []TableLockMode{
 		LOCK_ACCESS_SHARE,
 		LOCK_ROW_SHARE,
@@ -27,37 +25,35 @@ LOCK TABLE dvds.address IN`
 	}
 
 	for _, lockMode := range testData {
-		query := Address.LOCK().IN(lockMode)
+		stmt := Address.LOCK().IN(lockMode)
 
-		testutils.AssertDebugStatementSql(t, query, expectedSQL+" "+string(lockMode)+" MODE;\n")
+		require.Equal(t, testparrot.RecordNext(t, stmt.String()), stmt.String())
 
 		tx, _ := db.Begin()
 
-		_, err := query.Exec(tx)
+		_, err := stmt.Exec(tx)
 
 		require.NoError(t, err)
 
 		err = tx.Rollback()
 
 		require.NoError(t, err)
-		requireLogged(t, query)
 	}
 
 	for _, lockMode := range testData {
-		query := Address.LOCK().IN(lockMode).NOWAIT()
+		stmt := Address.LOCK().IN(lockMode).NOWAIT()
 
-		testutils.AssertDebugStatementSql(t, query, expectedSQL+" "+string(lockMode)+" MODE NOWAIT;\n")
+		require.Equal(t, testparrot.RecordNext(t, stmt.String()), stmt.String())
 
 		tx, _ := db.Begin()
 
-		_, err := query.Exec(tx)
+		_, err := stmt.Exec(tx)
 
 		require.NoError(t, err)
 
 		err = tx.Rollback()
 
 		require.NoError(t, err)
-		requireLogged(t, query)
 	}
 }
 

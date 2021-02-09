@@ -1,0 +1,4 @@
+INTERVAL ? DAY_HOUR
+([]interface {}) (len=1) {
+  (string) (len=6) "-10 25"
+}

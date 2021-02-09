@@ -1,0 +1,11 @@
+
+SELECT $1,
+     $2,
+     $3
+FROM db.table1;
+
+([]interface {}) (len=3) {
+  (int64) 1,
+  (float64) 2.2,
+  (bool) false
+}

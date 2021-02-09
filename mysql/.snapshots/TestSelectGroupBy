@@ -1,0 +1,6 @@
+
+SELECT table2.col_int AS "table2.col_int"
+FROM db.table2
+GROUP BY table2.col_float;
+
+([]interface {}) <nil>

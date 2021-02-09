@@ -1,0 +1,21 @@
+
+INSERT INTO db.table1 (col1, col_float)
+VALUES (DEFAULT, ?)
+ON DUPLICATE KEY UPDATE col_bool = ?,
+                        col_int = ?,
+                        col_float = ?,
+                        col_string = ?,
+                        col_time = CAST(? AS TIME),
+                        col_timestamp = TIMESTAMP(?),
+                        col_date = CAST(? AS DATE);
+
+([]interface {}) (len=8) {
+  (string) (len=3) "two",
+  (bool) true,
+  (int64) 11,
+  (float64) 11.1,
+  (string) (len=3) "str",
+  (string) (len=8) "11:23:11",
+  (string) (len=19) "2020-01-22 03:04:05",
+  (string) (len=10) "2020-12-01"
+}

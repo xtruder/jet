@@ -1,0 +1,4 @@
+(table2.col_json <=> ?)
+([]interface {}) (len=1) {
+  (string) (len=15) "{\"key\":\"value\"}"
+}

@@ -1,0 +1,4 @@
+INTERVAL ? YEAR_MONTH
+([]interface {}) (len=1) {
+  (string) (len=4) "-3-2"
+}

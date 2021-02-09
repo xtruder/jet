@@ -1,0 +1,4 @@
+(table1.col_int ^ ?)
+([]interface {}) (len=1) {
+  (int64) 11
+}

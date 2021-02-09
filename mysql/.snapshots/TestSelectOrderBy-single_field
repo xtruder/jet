@@ -1,0 +1,6 @@
+
+SELECT table2.col_float AS "table2.col_float"
+FROM db.table2
+ORDER BY table2.col_int DESC;
+
+([]interface {}) <nil>

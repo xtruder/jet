@@ -1,0 +1,10 @@
+
+DELETE FROM db.table1
+WHERE table1.col1 = ?
+ORDER BY table1.col1
+LIMIT ?;
+
+([]interface {}) (len=2) {
+  (int64) 1,
+  (int64) 1
+}

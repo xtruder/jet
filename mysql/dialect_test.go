@@ -2,61 +2,73 @@ package mysql
 
 import (
 	"testing"
+
+	"github.com/go-jet/jet/v2/internal/testutils"
 )
 
-func TestBoolExpressionIS_DISTINCT_FROM(t *testing.T) {
-	assertSerialize(t, table1ColBool.IS_DISTINCT_FROM(table2ColBool), "(NOT(table1.col_bool <=> table2.col_bool))")
-	assertSerialize(t, table1ColBool.IS_DISTINCT_FROM(Bool(false)), "(NOT(table1.col_bool <=> ?))", false)
+func TestDialectBoolExpressionIS_DISTINCT_FROM(t *testing.T) {
+	testutils.SerializerTests{
+		{Name: "column", Test: table1ColBool.IS_DISTINCT_FROM(table2ColBool)},
+		{Name: "literal", Test: table1ColBool.IS_DISTINCT_FROM(Bool(false))},
+	}.Run(t, Dialect)
 }
 
-func TestBoolExpressionIS_NOT_DISTINCT_FROM(t *testing.T) {
-	assertSerialize(t, table1ColBool.IS_NOT_DISTINCT_FROM(table2ColBool), "(table1.col_bool <=> table2.col_bool)")
-	assertSerialize(t, table1ColBool.IS_NOT_DISTINCT_FROM(Bool(false)), "(table1.col_bool <=> ?)", false)
+func TestDialectBoolExpressionIS_NOT_DISTINCT_FROM(t *testing.T) {
+	testutils.SerializerTests{
+		{Name: "column", Test: table1ColBool.IS_NOT_DISTINCT_FROM(table2ColBool)},
+		{Name: "literal", Test: table1ColBool.IS_NOT_DISTINCT_FROM(Bool(false))},
+	}.Run(t, Dialect)
 }
 
-func TestBoolLiteral(t *testing.T) {
-	assertSerialize(t, Bool(true), "?", true)
-	assertSerialize(t, Bool(false), "?", false)
+func TestDialectBoolLiteral(t *testing.T) {
+	testutils.SerializerTests{
+		{Name: "true", Test: Bool(true)},
+		{Name: "false", Test: Bool(false)},
+	}.Run(t, Dialect)
 }
 
-func TestIntegerExpressionDIV(t *testing.T) {
-	assertSerialize(t, table1ColInt.DIV(table2ColInt), "(table1.col_int DIV table2.col_int)")
-	assertSerialize(t, table1ColInt.DIV(Int(11)), "(table1.col_int DIV ?)", int64(11))
+func TestDialectIntegerExpressionDIV(t *testing.T) {
+	testutils.SerializerTests{
+		{Name: "column", Test: table1ColInt.DIV(table2ColInt)},
+		{Name: "literal", Test: table1ColInt.DIV(Int(11))},
+	}.Run(t, Dialect)
 }
 
-func TestIntExpressionPOW(t *testing.T) {
-	assertSerialize(t, table1ColInt.POW(table2ColInt), "POW(table1.col_int, table2.col_int)")
-	assertSerialize(t, table1ColInt.POW(Int(11)), "POW(table1.col_int, ?)", int64(11))
+func TestDialectIntExpressionPOW(t *testing.T) {
+	testutils.SerializerTests{
+		{Name: "column", Test: table1ColInt.POW(table2ColInt)},
+		{Name: "literal", Test: table1ColInt.POW(Int(11))},
+	}.Run(t, Dialect)
 }
 
-func TestIntExpressionBIT_XOR(t *testing.T) {
-	assertSerialize(t, table1ColInt.BIT_XOR(table2ColInt), "(table1.col_int ^ table2.col_int)")
-	assertSerialize(t, table1ColInt.BIT_XOR(Int(11)), "(table1.col_int ^ ?)", int64(11))
+func TestDialectIntExpressionBIT_XOR(t *testing.T) {
+	testutils.SerializerTests{
+		{Name: "column", Test: table1ColInt.BIT_XOR(table2ColInt)},
+		{Name: "literal", Test: table1ColInt.BIT_XOR(Int(11))},
+	}.Run(t, Dialect)
 }
 
-func TestExists(t *testing.T) {
-	assertSerialize(t, EXISTS(
-		table2.
-			SELECT(Int(1)).
-			WHERE(table1Col1.EQ(table2Col3)),
-	),
-		`(EXISTS (
-     SELECT ?
-     FROM db.table2
-     WHERE table1.col1 = table2.col3
-))`, int64(1))
+func TestDialectSelectExists(t *testing.T) {
+	testutils.SerializerTest{Test: table2.
+		SELECT(Int(1)).
+		WHERE(table1Col1.EQ(table2Col3)),
+	}.Assert(t, Dialect)
 }
 
-func TestString_REGEXP_LIKE_operator(t *testing.T) {
-	assertSerialize(t, table3StrCol.REGEXP_LIKE(table2ColStr), "(table3.col2 REGEXP table2.col_str)")
-	assertSerialize(t, table3StrCol.REGEXP_LIKE(String("JOHN")), "(table3.col2 REGEXP ?)", "JOHN")
-	assertSerialize(t, table3StrCol.REGEXP_LIKE(String("JOHN"), false), "(table3.col2 REGEXP ?)", "JOHN")
-	assertSerialize(t, table3StrCol.REGEXP_LIKE(String("JOHN"), true), "(table3.col2 REGEXP BINARY ?)", "JOHN")
+func TestDialectString_REGEXP_LIKE_operator(t *testing.T) {
+	testutils.SerializerTests{
+		{Name: "column", Test: table3StrCol.REGEXP_LIKE(table2ColStr)},
+		{Name: "literal", Test: table3StrCol.REGEXP_LIKE(String("JOHN"))},
+		{Name: "literal case sensitive", Test: table3StrCol.REGEXP_LIKE(String("JOHN"), true)},
+		{Name: "literal not sensitive", Test: table3StrCol.REGEXP_LIKE(String("JOHN"), false)},
+	}.Run(t, Dialect)
 }
 
-func TestString_NOT_REGEXP_LIKE_operator(t *testing.T) {
-	assertSerialize(t, table3StrCol.NOT_REGEXP_LIKE(table2ColStr), "(table3.col2 NOT REGEXP table2.col_str)")
-	assertSerialize(t, table3StrCol.NOT_REGEXP_LIKE(String("JOHN")), "(table3.col2 NOT REGEXP ?)", "JOHN")
-	assertSerialize(t, table3StrCol.NOT_REGEXP_LIKE(String("JOHN"), false), "(table3.col2 NOT REGEXP ?)", "JOHN")
-	assertSerialize(t, table3StrCol.NOT_REGEXP_LIKE(String("JOHN"), true), "(table3.col2 NOT REGEXP BINARY ?)", "JOHN")
+func TestDialectString_NOT_REGEXP_LIKE_operator(t *testing.T) {
+	testutils.SerializerTests{
+		{Name: "column", Test: table3StrCol.NOT_REGEXP_LIKE(table2ColStr)},
+		{Name: "literal", Test: table3StrCol.NOT_REGEXP_LIKE(String("JOHN"))},
+		{Name: "literal case sensitive", Test: table3StrCol.NOT_REGEXP_LIKE(String("JOHN"), true)},
+		{Name: "literal not case sensitive", Test: table3StrCol.NOT_REGEXP_LIKE(String("JOHN"), false)},
+	}.Run(t, Dialect)
 }

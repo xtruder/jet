@@ -1,0 +1,7 @@
+((EXISTS (
+     SELECT $1
+)) = $2)
+([]interface {}) (len=2) {
+  (int64) 1,
+  (bool) true
+}

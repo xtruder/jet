@@ -1,12 +1,11 @@
 package mysql
 
 import (
-	"github.com/go-jet/jet/v2/internal/testutils"
-	. "github.com/go-jet/jet/v2/mysql"
-	. "github.com/go-jet/jet/v2/tests/.gentestdata/mysql/dvds/table"
-	"github.com/stretchr/testify/require"
-	"strings"
 	"testing"
+
+	"github.com/go-jet/jet/v2/internal/utils"
+	. "github.com/go-jet/jet/v2/mysql"
+	. "github.com/go-jet/jet/v2/tests/mysql/gen/dvds/table"
 )
 
 func TestWITH_And_SELECT(t *testing.T) {
@@ -34,36 +33,16 @@ func TestWITH_And_SELECT(t *testing.T) {
 		),
 	)(
 		SELECT(customerSalesRep.AllColumns()).
-			FROM(customerSalesRep),
+			FROM(customerSalesRep).LIMIT(10),
 	)
 
-	//fmt.Println(stmt.DebugSql())
-
-	testutils.AssertStatementSql(t, stmt, strings.Replace(`
-WITH sales_rep AS (
-     SELECT staff.staff_id AS "staff.staff_id",
-          (CONCAT(staff.first_name, staff.last_name)) AS "sales_rep_full_name"
-     FROM dvds.staff
-),customer_sales_rep AS (
-     SELECT (CONCAT(customer.first_name, customer.last_name)) AS "customer_name",
-          sales_rep.sales_rep_full_name AS "sales_rep_full_name"
-     FROM sales_rep
-          INNER JOIN dvds.store ON (store.manager_staff_id = sales_rep.''staff.staff_id'')
-          INNER JOIN dvds.customer ON (customer.store_id = store.store_id)
-)
-SELECT customer_sales_rep.customer_name AS "customer_name",
-     customer_sales_rep.sales_rep_full_name AS "sales_rep_full_name"
-FROM customer_sales_rep;
-`, "''", "`", -1))
-
-	var dest []struct {
+	dest := []struct {
 		CustomerName     string
 		SalesRepFullName string
-	}
-	err := stmt.Query(db, &dest)
+	}{}
 
-	require.Equal(t, len(dest), 599)
-	require.NoError(t, err)
+	assertStatementRecordSQL(t, stmt)
+	assertQueryRecordValues(t, stmt, &dest)
 }
 
 //func TestWITH_And_INSERT(t *testing.T) {
@@ -85,19 +64,16 @@ FROM customer_sales_rep;
 //		),
 //	)
 //
-//	//fmt.Println(stmt.DebugSql())
+//	//fmt.Println(stmt.String())
 //
 //	tx, err := db.Begin()
 //	require.NoError(t, err)
 //	defer tx.Rollback()
 //
-//	testutils.AssertExec(t, stmt, tx, 24)
+//	testing.AssertExec(t, stmt, tx, 24)
 //}
 
 func TestWITH_And_UPDATE(t *testing.T) {
-	if sourceIsMariaDB() {
-		return
-	}
 	paymentsToUpdate := CTE("payments_to_update")
 	paymentsToDeleteID := Payment.PaymentID.From(paymentsToUpdate)
 
@@ -117,20 +93,15 @@ func TestWITH_And_UPDATE(t *testing.T) {
 			),
 	)
 
-	//fmt.Println(stmt.DebugSql())
-
 	tx, err := db.Begin()
-	require.NoError(t, err)
+	utils.PanicOnError(err)
 	defer tx.Rollback()
 
-	testutils.AssertExec(t, stmt, tx)
+	assertStatementRecordSQL(t, stmt)
+	assertExec(t, stmt, tx)
 }
 
 func TestWITH_And_DELETE(t *testing.T) {
-	if sourceIsMariaDB() {
-		return
-	}
-
 	paymentsToDelete := CTE("payments_to_delete")
 	paymentsToDeleteID := Payment.PaymentID.From(paymentsToDelete)
 
@@ -149,11 +120,10 @@ func TestWITH_And_DELETE(t *testing.T) {
 			),
 	)
 
-	//fmt.Println(stmt.DebugSql())
-
 	tx, err := db.Begin()
-	require.NoError(t, err)
+	utils.PanicOnError(err)
 	defer tx.Rollback()
 
-	testutils.AssertExec(t, stmt, tx, 24)
+	assertStatementRecordSQL(t, stmt)
+	assertExec(t, stmt, tx)
 }

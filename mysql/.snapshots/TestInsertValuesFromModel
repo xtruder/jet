@@ -1,0 +1,11 @@
+
+INSERT INTO db.table1 (col1, col_float)
+VALUES (?, ?),
+       (?, ?);
+
+([]interface {}) (len=4) {
+  (int) 1,
+  (float64) 1.11,
+  (int) 1,
+  (float64) 1.11
+}

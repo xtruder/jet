@@ -2,14 +2,15 @@ package postgres
 
 import (
 	"context"
-	"fmt"
-	"github.com/go-jet/jet/v2/internal/testutils"
-	. "github.com/go-jet/jet/v2/postgres"
-	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/chinook/model"
-	. "github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/chinook/table"
-	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
+
+	. "github.com/go-jet/jet/v2/postgres"
+	"github.com/go-jet/jet/v2/tests/postgres/gen/chinook/model"
+	. "github.com/go-jet/jet/v2/tests/postgres/gen/chinook/table"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/xtruder/go-testparrot"
 )
 
 func TestSelect(t *testing.T) {
@@ -17,29 +18,16 @@ func TestSelect(t *testing.T) {
 		SELECT(Album.AllColumns).
 		ORDER_BY(Album.AlbumId.ASC())
 
-	fmt.Println(stmt.DebugSql())
-
-	testutils.AssertDebugStatementSql(t, stmt, `
-SELECT "Album"."AlbumId" AS "Album.AlbumId",
-     "Album"."Title" AS "Album.Title",
-     "Album"."ArtistId" AS "Album.ArtistId"
-FROM chinook."Album"
-ORDER BY "Album"."AlbumId" ASC;
-`)
 	dest := []model.Album{}
 
-	err := stmt.Query(db, &dest)
-
-	require.NoError(t, err)
-	require.Equal(t, len(dest), 347)
-	testutils.AssertDeepEqual(t, dest[0], album1)
-	testutils.AssertDeepEqual(t, dest[1], album2)
-	testutils.AssertDeepEqual(t, dest[len(dest)-1], album347)
-	requireLogged(t, stmt)
+	require.Equal(t, testparrot.RecordNext(t, stmt.String()), stmt.String())
+	require.NoError(t, stmt.Query(db, &dest))
+	require.Len(t, dest, testparrot.RecordNext(t, len(dest)).(int))
+	require.EqualValues(t, testparrot.RecordNext(t, dest[0]), dest[0])
+	require.EqualValues(t, testparrot.RecordNext(t, dest[len(dest)-1]), dest[len(dest)-1])
 }
 
 func TestJoinEverything(t *testing.T) {
-
 	manager := Employee.AS("Manager")
 
 	stmt := Artist.
@@ -71,7 +59,7 @@ func TestJoinEverything(t *testing.T) {
 			Genre.GenreId, MediaType.MediaTypeId, Playlist.PlaylistId,
 			Invoice.InvoiceId, Customer.CustomerId)
 
-	var dest []struct { //list of all artist
+	dest := []struct { //list of all artist
 		model.Artist
 
 		Albums []struct { // list of albums per artist
@@ -100,23 +88,17 @@ func TestJoinEverything(t *testing.T) {
 				}
 			}
 		}
-	}
+	}{}
 
-	err := stmt.Query(db, &dest)
+	assertStatementRecordSQL(t, stmt)
+	assertQueryDest(t, stmt, &dest)
 
-	require.NoError(t, err)
-	require.Equal(t, len(dest), 275)
-	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/joined_everything.json")
-	requireLogged(t, stmt)
+	require.Len(t, dest, testparrot.RecordNext(t, len(dest)).(int))
+	assert.EqualValues(t, testparrot.RecordNext(t, dest[0]), dest[0])
+	assert.EqualValues(t, testparrot.RecordNext(t, dest[len(dest)-1]), dest[len(dest)-1])
 }
 
 func TestSelfJoin(t *testing.T) {
-	var dest []struct {
-		model.Employee
-
-		Manager *model.Employee `alias:"Manager.*"`
-	}
-
 	manager := Employee.AS("Manager")
 
 	stmt := Employee.
@@ -131,122 +113,35 @@ func TestSelfJoin(t *testing.T) {
 		).
 		ORDER_BY(Employee.EmployeeId)
 
-	testutils.AssertDebugStatementSql(t, stmt, `
-SELECT "Employee"."EmployeeId" AS "Employee.EmployeeId",
-     "Employee"."FirstName" AS "Employee.FirstName",
-     "Employee"."LastName" AS "Employee.LastName",
-     "Manager"."EmployeeId" AS "Manager.EmployeeId",
-     "Manager"."FirstName" AS "Manager.FirstName",
-     "Manager"."LastName" AS "Manager.LastName"
-FROM chinook."Employee"
-     LEFT JOIN chinook."Employee" AS "Manager" ON ("Employee"."ReportsTo" = "Manager"."EmployeeId")
-ORDER BY "Employee"."EmployeeId";
-`)
+	dest := []struct {
+		model.Employee
 
-	err := stmt.Query(db, &dest)
+		Manager *model.Employee `alias:"Manager.*"`
+	}{}
 
-	require.NoError(t, err)
-	require.Equal(t, len(dest), 8)
-	testutils.AssertJSON(t, dest[0:2], `
-[
-	{
-		"EmployeeId": 1,
-		"LastName": "Adams",
-		"FirstName": "Andrew",
-		"Title": null,
-		"ReportsTo": null,
-		"BirthDate": null,
-		"HireDate": null,
-		"Address": null,
-		"City": null,
-		"State": null,
-		"Country": null,
-		"PostalCode": null,
-		"Phone": null,
-		"Fax": null,
-		"Email": null,
-		"Manager": null
-	},
-	{
-		"EmployeeId": 2,
-		"LastName": "Edwards",
-		"FirstName": "Nancy",
-		"Title": null,
-		"ReportsTo": null,
-		"BirthDate": null,
-		"HireDate": null,
-		"Address": null,
-		"City": null,
-		"State": null,
-		"Country": null,
-		"PostalCode": null,
-		"Phone": null,
-		"Fax": null,
-		"Email": null,
-		"Manager": {
-			"EmployeeId": 1,
-			"LastName": "Adams",
-			"FirstName": "Andrew",
-			"Title": null,
-			"ReportsTo": null,
-			"BirthDate": null,
-			"HireDate": null,
-			"Address": null,
-			"City": null,
-			"State": null,
-			"Country": null,
-			"PostalCode": null,
-			"Phone": null,
-			"Fax": null,
-			"Email": null
-		}
-	}
-]
-`)
+	assertStatementRecordSQL(t, stmt)
+	assertQueryDest(t, stmt, &dest)
 
+	require.Len(t, dest, testparrot.RecordNext(t, len(dest)).(int))
+	assert.EqualValues(t, testparrot.RecordNext(t, dest[0:2]), dest[0:2])
 }
 
 func TestUnionForQuotedNames(t *testing.T) {
-
 	stmt := UNION_ALL(
 		Album.SELECT(Album.AllColumns).WHERE(Album.AlbumId.EQ(Int(1))),
 		Album.SELECT(Album.AllColumns).WHERE(Album.AlbumId.EQ(Int(2))),
-	).
-		ORDER_BY(Album.AlbumId)
-
-	//fmt.Println(stmt.DebugSql())
-	testutils.AssertDebugStatementSql(t, stmt, `
-(
-     SELECT "Album"."AlbumId" AS "Album.AlbumId",
-          "Album"."Title" AS "Album.Title",
-          "Album"."ArtistId" AS "Album.ArtistId"
-     FROM chinook."Album"
-     WHERE "Album"."AlbumId" = 1
-)
-UNION ALL
-(
-     SELECT "Album"."AlbumId" AS "Album.AlbumId",
-          "Album"."Title" AS "Album.Title",
-          "Album"."ArtistId" AS "Album.ArtistId"
-     FROM chinook."Album"
-     WHERE "Album"."AlbumId" = 2
-)
-ORDER BY "Album.AlbumId";
-`, int64(1), int64(2))
+	).ORDER_BY(Album.AlbumId)
 
 	dest := []model.Album{}
 
-	err := stmt.Query(db, &dest)
+	assertStatementRecordSQL(t, stmt)
+	assertQueryDest(t, stmt, &dest)
 
-	require.NoError(t, err)
-
-	require.Equal(t, len(dest), 2)
-	testutils.AssertDeepEqual(t, dest[0], album1)
-	testutils.AssertDeepEqual(t, dest[1], album2)
+	require.Len(t, dest, testparrot.RecordNext(t, len(dest)).(int))
+	require.EqualValues(t, testparrot.RecordNext(t, dest[0:2]), dest[0:2])
 }
 
 func TestQueryWithContext(t *testing.T) {
-
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
 
@@ -262,7 +157,6 @@ func TestQueryWithContext(t *testing.T) {
 }
 
 func TestExecWithContext(t *testing.T) {
-
 	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Millisecond)
 	defer cancel()
 
@@ -297,57 +191,15 @@ func TestSubQueriesForQuotedNames(t *testing.T) {
 		SELECT(first10Artist.AllColumns(), first10Albums.AllColumns()).
 		ORDER_BY(artistID)
 
-	testutils.AssertDebugStatementSql(t, stmt, `
-SELECT "first10Artist"."Artist.ArtistId" AS "Artist.ArtistId",
-     "first10Artist"."Artist.Name" AS "Artist.Name",
-     "first10Albums"."Album.AlbumId" AS "Album.AlbumId",
-     "first10Albums"."Album.Title" AS "Album.Title",
-     "first10Albums"."Album.ArtistId" AS "Album.ArtistId"
-FROM (
-          SELECT "Artist"."ArtistId" AS "Artist.ArtistId",
-               "Artist"."Name" AS "Artist.Name"
-          FROM chinook."Artist"
-          ORDER BY "Artist"."ArtistId"
-          LIMIT 10
-     ) AS "first10Artist"
-     INNER JOIN (
-          SELECT "Album"."AlbumId" AS "Album.AlbumId",
-               "Album"."Title" AS "Album.Title",
-               "Album"."ArtistId" AS "Album.ArtistId"
-          FROM chinook."Album"
-          ORDER BY "Album"."AlbumId"
-          LIMIT 10
-     ) AS "first10Albums" ON ("first10Artist"."Artist.ArtistId" = "first10Albums"."Album.ArtistId")
-ORDER BY "first10Artist"."Artist.ArtistId";
-`, int64(10), int64(10))
-
-	var dest []struct {
+	dest := []struct {
 		model.Artist
 
 		Album []model.Album
-	}
+	}{}
 
-	err := stmt.Query(db, &dest)
+	assertStatementRecordSQL(t, stmt)
+	assertQueryDest(t, stmt, &dest)
 
-	require.NoError(t, err)
-
-	//spew.Dump(dest)
-}
-
-var album1 = model.Album{
-	AlbumId:  1,
-	Title:    "For Those About To Rock We Salute You",
-	ArtistId: 1,
-}
-
-var album2 = model.Album{
-	AlbumId:  2,
-	Title:    "Balls to the Wall",
-	ArtistId: 2,
-}
-
-var album347 = model.Album{
-	AlbumId:  347,
-	Title:    "Koyaanisqatsi (Soundtrack from the Motion Picture)",
-	ArtistId: 275,
+	require.Len(t, dest, testparrot.RecordNext(t, len(dest)).(int))
+	require.EqualValues(t, testparrot.RecordNext(t, dest[0:2]), dest[0:2])
 }

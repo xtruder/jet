@@ -2,24 +2,25 @@ package postgres
 
 import (
 	"testing"
+
+	"github.com/go-jet/jet/v2/internal/testutils"
 )
 
 func TestDeleteUnconditionally(t *testing.T) {
-	assertStatementSqlErr(t, table1.DELETE(), `jet: WHERE clause not set`)
-	assertStatementSqlErr(t, table1.DELETE().WHERE(nil), `jet: WHERE clause not set`)
+	testutils.StatementTests{
+		{Name: "panics if where not set", Test: table1.DELETE(),
+			Panics: `jet: WHERE clause not set`},
+		{Name: "panics if where is nil", Test: table1.DELETE().WHERE(nil),
+			Panics: `jet: WHERE clause not set`},
+	}.Run(t)
 }
 
 func TestDeleteWithWhere(t *testing.T) {
-	assertStatementSql(t, table1.DELETE().WHERE(table1Col1.EQ(Int(1))), `
-DELETE FROM db.table1
-WHERE table1.col1 = $1;
-`, int64(1))
+	stmt := table1.DELETE().WHERE(table1Col1.EQ(Int(1)))
+	testutils.StatementTest{Test: stmt}.Assert(t)
 }
 
 func TestDeleteWithWhereAndReturning(t *testing.T) {
-	assertStatementSql(t, table1.DELETE().WHERE(table1Col1.EQ(Int(1))).RETURNING(table1Col1), `
-DELETE FROM db.table1
-WHERE table1.col1 = $1
-RETURNING table1.col1 AS "table1.col1";
-`, int64(1))
+	stmt := table1.DELETE().WHERE(table1Col1.EQ(Int(1))).RETURNING(table1Col1)
+	testutils.StatementTest{Test: stmt}.Assert(t)
 }

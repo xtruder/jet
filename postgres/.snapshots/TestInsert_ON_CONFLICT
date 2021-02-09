@@ -1,0 +1,26 @@
+
+INSERT INTO db.table1 (col1, col_bool)
+VALUES ($1, $2),
+       ($3, $4),
+       ($5, $6)
+ON CONFLICT (col_bool) WHERE col_bool IS NOT FALSE DO UPDATE
+       SET col_bool = $7,
+           col_int = $8,
+           (col1, col_bool) = ROW($9, $10)
+       WHERE table1.col1 > $11
+RETURNING table1.col1 AS "table1.col1",
+          table1.col_bool AS "table1.col_bool";
+
+([]interface {}) (len=11) {
+  (string) (len=3) "one",
+  (string) (len=3) "two",
+  (string) (len=1) "1",
+  (string) (len=1) "2",
+  (string) (len=5) "theta",
+  (string) (len=4) "beta",
+  (bool) true,
+  (int64) 1,
+  (int64) 2,
+  (string) (len=3) "two",
+  (int64) 2
+}

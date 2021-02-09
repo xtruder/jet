@@ -1,0 +1,4 @@
+INTERVAL ? SECOND_MICROSECOND
+([]interface {}) (len=1) {
+  (string) (len=10) "-08.000100"
+}

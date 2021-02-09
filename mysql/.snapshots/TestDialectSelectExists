@@ -1,0 +1,8 @@
+(
+     SELECT ?
+     FROM db.table2
+     WHERE table1.col1 = table2.col3
+)
+([]interface {}) (len=1) {
+  (int64) 1
+}

@@ -1,0 +1,2 @@
+(table2.col_time - INTERVAL '1 HOUR')
+([]interface {}) <nil>

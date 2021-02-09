@@ -1,0 +1,2 @@
+INTERVAL table1.col_float HOUR
+([]interface {}) <nil>

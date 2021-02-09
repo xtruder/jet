@@ -1,0 +1,4 @@
+JSON_MERGE_PATCH(table2.col_json, ?)
+([]interface {}) (len=1) {
+  (string) (len=15) "[\"val1\",\"val2\"]"
+}

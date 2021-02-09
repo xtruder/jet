@@ -1,0 +1,5 @@
+
+SELECT DISTINCT table1.col_bool AS "table1.col_bool"
+FROM db.table1;
+
+([]interface {}) <nil>

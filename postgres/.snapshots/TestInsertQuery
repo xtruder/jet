@@ -1,0 +1,7 @@
+
+INSERT INTO db.table1 (col1) (
+     SELECT table1.col1 AS "table1.col1"
+     FROM db.table1
+);
+
+([]interface {}) <nil>

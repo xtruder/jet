@@ -1,0 +1,4 @@
+INTERVAL ? MINUTE_SECOND
+([]interface {}) (len=1) {
+  (string) (len=5) "08:03"
+}

@@ -1,0 +1,4 @@
+
+LOCK TABLES db.table2 WRITE;
+
+([]interface {}) <nil>

@@ -1,0 +1,2 @@
+(table3.col2 !~* table2.col_str)
+([]interface {}) <nil>

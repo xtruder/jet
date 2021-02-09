@@ -6,8 +6,10 @@ import (
 	"github.com/go-jet/jet/v2/internal/3rdparty/snaker"
 	"go/format"
 	"os"
+	"path"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"strings"
 	"time"
 	"unicode"
@@ -212,4 +214,14 @@ func ExtractDateTimeComponents(duration time.Duration) (days, hours, minutes, se
 	microseconds = int64(reminder / time.Microsecond)
 
 	return
+}
+
+// PkgPath returns package filesystem path
+func PkgPath(skip int) string {
+	_, filename, _, ok := runtime.Caller(skip + 1)
+	if !ok {
+		panic("could not find package path")
+	}
+
+	return path.Dir(filename)
 }

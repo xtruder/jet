@@ -1,0 +1,4 @@
+CAST(? AS DATETIME)
+([]interface {}) (len=1) {
+  (int64) 22
+}

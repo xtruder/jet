@@ -1,0 +1,6 @@
+
+SELECT table1.col_bool AS "table1.col_bool"
+FROM db.table1
+FOR NO KEY UPDATE SKIP LOCKED;
+
+([]interface {}) <nil>

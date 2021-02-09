@@ -2,32 +2,33 @@ package utils
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestToGoIdentifier(t *testing.T) {
-	require.Equal(t, ToGoIdentifier(""), "")
-	require.Equal(t, ToGoIdentifier("uuid"), "UUID")
-	require.Equal(t, ToGoIdentifier("col1"), "Col1")
-	require.Equal(t, ToGoIdentifier("PG-13"), "Pg13")
-	require.Equal(t, ToGoIdentifier("13_pg"), "13Pg")
+	assert.Equal(t, ToGoIdentifier(""), "")
+	assert.Equal(t, ToGoIdentifier("uuid"), "UUID")
+	assert.Equal(t, ToGoIdentifier("col1"), "Col1")
+	assert.Equal(t, ToGoIdentifier("PG-13"), "Pg13")
+	assert.Equal(t, ToGoIdentifier("13_pg"), "13Pg")
 
-	require.Equal(t, ToGoIdentifier("mytable"), "Mytable")
-	require.Equal(t, ToGoIdentifier("MYTABLE"), "Mytable")
-	require.Equal(t, ToGoIdentifier("MyTaBlE"), "MyTaBlE")
-	require.Equal(t, ToGoIdentifier("myTaBlE"), "MyTaBlE")
+	assert.Equal(t, ToGoIdentifier("mytable"), "Mytable")
+	assert.Equal(t, ToGoIdentifier("MYTABLE"), "Mytable")
+	assert.Equal(t, ToGoIdentifier("MyTaBlE"), "MyTaBlE")
+	assert.Equal(t, ToGoIdentifier("myTaBlE"), "MyTaBlE")
 
-	require.Equal(t, ToGoIdentifier("my_table"), "MyTable")
-	require.Equal(t, ToGoIdentifier("MY_TABLE"), "MyTable")
-	require.Equal(t, ToGoIdentifier("My_Table"), "MyTable")
-	require.Equal(t, ToGoIdentifier("My Table"), "MyTable")
-	require.Equal(t, ToGoIdentifier("My-Table"), "MyTable")
+	assert.Equal(t, ToGoIdentifier("my_table"), "MyTable")
+	assert.Equal(t, ToGoIdentifier("MY_TABLE"), "MyTable")
+	assert.Equal(t, ToGoIdentifier("My_Table"), "MyTable")
+	assert.Equal(t, ToGoIdentifier("My Table"), "MyTable")
+	assert.Equal(t, ToGoIdentifier("My-Table"), "MyTable")
 }
 
 func TestToGoEnumValueIdentifier(t *testing.T) {
-	require.Equal(t, ToGoEnumValueIdentifier("enum_name", "enum_value"), "EnumValue")
-	require.Equal(t, ToGoEnumValueIdentifier("NumEnum", "100"), "NumEnum100")
+	assert.Equal(t, ToGoEnumValueIdentifier("enum_name", "enum_value"), "EnumValue")
+	assert.Equal(t, ToGoEnumValueIdentifier("NumEnum", "100"), "NumEnum100")
 }
 
 func TestErrorCatchErr(t *testing.T) {
@@ -39,7 +40,7 @@ func TestErrorCatchErr(t *testing.T) {
 		panic(fmt.Errorf("newError"))
 	}()
 
-	require.Error(t, err, "newError")
+	assert.Error(t, err, "newError")
 }
 
 func TestErrorCatchNonErr(t *testing.T) {
@@ -51,5 +52,5 @@ func TestErrorCatchNonErr(t *testing.T) {
 		panic(11)
 	}()
 
-	require.Error(t, err, "11")
+	assert.Error(t, err, "11")
 }

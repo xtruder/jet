@@ -1,45 +1,33 @@
 package mysql
 
 import (
-	"github.com/go-jet/jet/v2/internal/testutils"
-	. "github.com/go-jet/jet/v2/mysql"
-	. "github.com/go-jet/jet/v2/tests/.gentestdata/mysql/dvds/table"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	. "github.com/go-jet/jet/v2/mysql"
+	. "github.com/go-jet/jet/v2/tests/mysql/gen/dvds/table"
 )
 
 func TestLockRead(t *testing.T) {
 	query := Customer.LOCK().READ()
 
-	testutils.AssertStatementSql(t, query, `
-LOCK TABLES dvds.customer READ;
-`)
+	defer db.Exec("UNLOCK TABLES;")
 
-	_, err := query.Exec(db)
-	require.NoError(t, err)
-	requireLogged(t, query)
+	assertStatementSql(t, query, `LOCK TABLES dvds.customer READ;`)
+	assertExec(t, query, db)
 }
 
 func TestLockWrite(t *testing.T) {
 	query := Customer.LOCK().WRITE()
 
-	testutils.AssertStatementSql(t, query, `
-LOCK TABLES dvds.customer WRITE;
-`)
+	defer db.Exec("UNLOCK TABLES;")
 
-	_, err := query.Exec(db)
-	require.NoError(t, err)
-	requireLogged(t, query)
+	assertStatementSql(t, query, `LOCK TABLES dvds.customer WRITE;`)
+	assertExec(t, query, db)
 }
 
 func TestUnlockTables(t *testing.T) {
 	query := UNLOCK_TABLES()
 
-	testutils.AssertStatementSql(t, query, `
-UNLOCK TABLES;
-`)
-
-	_, err := query.Exec(db)
-	require.NoError(t, err)
-	requireLogged(t, query)
+	assertStatementSql(t, query, `UNLOCK TABLES;`)
+	assertExec(t, query, db)
 }

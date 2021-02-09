@@ -1,0 +1,4 @@
+db.table1
+CROSS JOIN db.table2
+CROSS JOIN db.table3
+([]interface {}) <nil>

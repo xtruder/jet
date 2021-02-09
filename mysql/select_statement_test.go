@@ -1,134 +1,91 @@
 package mysql
 
 import (
-	"github.com/go-jet/jet/v2/internal/testutils"
 	"testing"
+
+	"github.com/go-jet/jet/v2/internal/testutils"
 )
 
 func TestInvalidSelect(t *testing.T) {
-	assertStatementSqlErr(t, SELECT(nil), "jet: Projection is nil")
+	testutils.StatementTest{
+		Test:   SELECT(nil),
+		Panics: "jet: Projection is nil",
+	}.Assert(t)
 }
 
 func TestSelectColumnList(t *testing.T) {
 	columnList := ColumnList{table2ColInt, table2ColFloat, table3ColInt}
 
-	assertStatementSql(t, SELECT(columnList).FROM(table2), `
-SELECT table2.col_int AS "table2.col_int",
-     table2.col_float AS "table2.col_float",
-     table3.col_int AS "table3.col_int"
-FROM db.table2;
-`)
+	testutils.StatementTest{Test: SELECT(columnList).FROM(table2)}.Assert(t)
 }
 
 func TestSelectLiterals(t *testing.T) {
-	assertStatementSql(t, SELECT(Int(1), Float(2.2), Bool(false)).FROM(table1), `
-SELECT ?,
-     ?,
-     ?
-FROM db.table1;
-`, int64(1), 2.2, false)
+	testutils.StatementTest{Test: SELECT(Int(1), Float(2.2), Bool(false)).FROM(table1)}.Assert(t)
 }
 
 func TestSelectDistinct(t *testing.T) {
-	assertStatementSql(t, SELECT(table1ColBool).DISTINCT().FROM(table1), `
-SELECT DISTINCT table1.col_bool AS "table1.col_bool"
-FROM db.table1;
-`)
+	testutils.StatementTest{Test: SELECT(table1ColBool).DISTINCT().FROM(table1)}.Assert(t)
 }
 
 func TestSelectFrom(t *testing.T) {
-	assertStatementSql(t, SELECT(table1ColInt, table2ColFloat).FROM(table1), `
-SELECT table1.col_int AS "table1.col_int",
-     table2.col_float AS "table2.col_float"
-FROM db.table1;
-`)
-	assertStatementSql(t, SELECT(table1ColInt, table2ColFloat).FROM(table1.INNER_JOIN(table2, table1ColInt.EQ(table2ColInt))), `
-SELECT table1.col_int AS "table1.col_int",
-     table2.col_float AS "table2.col_float"
-FROM db.table1
-     INNER JOIN db.table2 ON (table1.col_int = table2.col_int);
-`)
-	assertStatementSql(t, table1.INNER_JOIN(table2, table1ColInt.EQ(table2ColInt)).SELECT(table1ColInt, table2ColFloat), `
-SELECT table1.col_int AS "table1.col_int",
-     table2.col_float AS "table2.col_float"
-FROM db.table1
-     INNER JOIN db.table2 ON (table1.col_int = table2.col_int);
-`)
+	testutils.StatementTests{
+		{Name: "two cols",
+			Test: SELECT(table1ColInt, table2ColFloat).FROM(table1)},
+		{Name: "two cols and join",
+			Test: SELECT(table1ColInt, table2ColFloat).FROM(table1.INNER_JOIN(table2, table1ColInt.EQ(table2ColInt)))},
+		{Name: "inner join",
+			Test: table1.INNER_JOIN(table2, table1ColInt.EQ(table2ColInt)).SELECT(table1ColInt, table2ColFloat)},
+	}.Run(t)
 }
 
 func TestSelectWhere(t *testing.T) {
-	assertStatementSql(t, SELECT(table1ColInt).FROM(table1).WHERE(Bool(true)), `
-SELECT table1.col_int AS "table1.col_int"
-FROM db.table1
-WHERE ?;
-`, true)
-	assertStatementSql(t, SELECT(table1ColInt).FROM(table1).WHERE(table1ColInt.GT_EQ(Int(10))), `
-SELECT table1.col_int AS "table1.col_int"
-FROM db.table1
-WHERE table1.col_int >= ?;
-`, int64(10))
+	testutils.StatementTests{
+		{Name: "simple condition",
+			Test: SELECT(table1ColInt).FROM(table1).WHERE(Bool(true))},
+		{Name: "complex condition",
+			Test: SELECT(table1ColInt).FROM(table1).WHERE(table1ColInt.GT_EQ(Int(10)))},
+	}.Run(t)
 }
 
 func TestSelectGroupBy(t *testing.T) {
-	assertStatementSql(t, SELECT(table2ColInt).FROM(table2).GROUP_BY(table2ColFloat), `
-SELECT table2.col_int AS "table2.col_int"
-FROM db.table2
-GROUP BY table2.col_float;
-`)
+	testutils.StatementTest{
+		Test: SELECT(table2ColInt).FROM(table2).GROUP_BY(table2ColFloat),
+	}.Assert(t)
 }
 
 func TestSelectHaving(t *testing.T) {
-	assertStatementSql(t, SELECT(table3ColInt).FROM(table3).HAVING(table1ColBool.EQ(Bool(true))), `
-SELECT table3.col_int AS "table3.col_int"
-FROM db.table3
-HAVING table1.col_bool = ?;
-`, true)
+	testutils.StatementTest{
+		Test: SELECT(table3ColInt).FROM(table3).HAVING(table1ColBool.EQ(Bool(true))),
+	}.Assert(t)
 }
 
 func TestSelectOrderBy(t *testing.T) {
-	assertStatementSql(t, SELECT(table2ColFloat).FROM(table2).ORDER_BY(table2ColInt.DESC()), `
-SELECT table2.col_float AS "table2.col_float"
-FROM db.table2
-ORDER BY table2.col_int DESC;
-`)
-	assertStatementSql(t, SELECT(table2ColFloat).FROM(table2).ORDER_BY(table2ColInt.DESC(), table2ColInt.ASC()), `
-SELECT table2.col_float AS "table2.col_float"
-FROM db.table2
-ORDER BY table2.col_int DESC, table2.col_int ASC;
-`)
+	testutils.StatementTests{
+		{Name: "single field",
+			Test: SELECT(table2ColFloat).FROM(table2).ORDER_BY(table2ColInt.DESC())},
+		{Name: "multiple field",
+			Test: SELECT(table2ColFloat).FROM(table2).ORDER_BY(table2ColInt.DESC(), table2ColInt.ASC())},
+	}.Run(t)
 }
 
 func TestSelectLimitOffset(t *testing.T) {
-	assertStatementSql(t, SELECT(table2ColInt).FROM(table2).LIMIT(10), `
-SELECT table2.col_int AS "table2.col_int"
-FROM db.table2
-LIMIT ?;
-`, int64(10))
-	assertStatementSql(t, SELECT(table2ColInt).FROM(table2).LIMIT(10).OFFSET(2), `
-SELECT table2.col_int AS "table2.col_int"
-FROM db.table2
-LIMIT ?
-OFFSET ?;
-`, int64(10), int64(2))
+	testutils.StatementTests{
+		{Name: "only limit",
+			Test: SELECT(table2ColInt).FROM(table2).LIMIT(10)},
+		{Name: "limit and offset",
+			Test: SELECT(table2ColInt).FROM(table2).LIMIT(10).OFFSET(2)},
+	}.Run(t)
 }
 
 func TestSelectLock(t *testing.T) {
-	testutils.AssertStatementSql(t, SELECT(table1ColBool).FROM(table1).FOR(UPDATE()), `
-SELECT table1.col_bool AS "table1.col_bool"
-FROM db.table1
-FOR UPDATE;
-`)
-	testutils.AssertStatementSql(t, SELECT(table1ColBool).FROM(table1).FOR(SHARE().NOWAIT()), `
-SELECT table1.col_bool AS "table1.col_bool"
-FROM db.table1
-FOR SHARE NOWAIT;
-`)
+	testutils.StatementTests{
+		{Name: "for update",
+			Test: SELECT(table1ColBool).FROM(table1).FOR(UPDATE())},
+		{Name: "for update no wait",
+			Test: SELECT(table1ColBool).FROM(table1).FOR(SHARE().NOWAIT())},
+	}.Run(t)
 }
 
 func TestSelect_LOCK_IN_SHARE_MODE(t *testing.T) {
-	testutils.AssertStatementSql(t, SELECT(table1ColBool).FROM(table1).LOCK_IN_SHARE_MODE(), `
-SELECT table1.col_bool AS "table1.col_bool"
-FROM db.table1
-LOCK IN SHARE MODE;
-`)
+	testutils.StatementTest{Test: SELECT(table1ColBool).FROM(table1).LOCK_IN_SHARE_MODE()}.Assert(t)
 }

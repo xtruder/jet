@@ -1,76 +1,35 @@
 package postgres
 
 import (
-	"fmt"
-	"github.com/go-jet/jet/v2/internal/testutils"
-	. "github.com/go-jet/jet/v2/postgres"
-	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/enum"
-	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/model"
-	. "github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/table"
-	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/dvds/view"
-	"github.com/stretchr/testify/require"
+	"encoding/json"
 	"testing"
 	"time"
+
+	"github.com/go-jet/jet/v2/internal/testutils"
+	. "github.com/go-jet/jet/v2/postgres"
+	qrm "github.com/go-jet/jet/v2/qrm"
+	"github.com/go-jet/jet/v2/tests/postgres/gen/dvds/enum"
+	"github.com/go-jet/jet/v2/tests/postgres/gen/dvds/model"
+	. "github.com/go-jet/jet/v2/tests/postgres/gen/dvds/table"
+	"github.com/go-jet/jet/v2/tests/postgres/gen/dvds/view"
+	"github.com/stretchr/testify/require"
+	"github.com/xtruder/go-testparrot"
 )
 
 func TestSelect_ScanToStruct(t *testing.T) {
-	expectedSQL := `
-SELECT DISTINCT actor.actor_id AS "actor.actor_id",
-     actor.first_name AS "actor.first_name",
-     actor.last_name AS "actor.last_name",
-     actor.last_update AS "actor.last_update"
-FROM dvds.actor
-WHERE actor.actor_id = 2;
-`
-
 	query := Actor.
 		SELECT(Actor.AllColumns).
 		DISTINCT().
 		WHERE(Actor.ActorID.EQ(Int(2)))
 
-	testutils.AssertDebugStatementSql(t, query, expectedSQL, int64(2))
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
 
 	actor := model.Actor{}
-	err := query.Query(db, &actor)
-
-	require.NoError(t, err)
-
-	expectedActor := model.Actor{
-		ActorID:    2,
-		FirstName:  "Nick",
-		LastName:   "Wahlberg",
-		LastUpdate: *testutils.TimestampWithoutTimeZone("2013-05-26 14:47:57.62", 2),
-	}
-
-	testutils.AssertDeepEqual(t, actor, expectedActor)
-
-	requireLogged(t, query)
+	require.NoError(t, query.Query(db, &actor))
+	require.EqualValues(t, testparrot.RecordNext(t, actor), actor)
 }
 
 func TestClassicSelect(t *testing.T) {
-	expectedSQL := `
-SELECT payment.payment_id AS "payment.payment_id",
-     payment.customer_id AS "payment.customer_id",
-     payment.staff_id AS "payment.staff_id",
-     payment.rental_id AS "payment.rental_id",
-     payment.amount AS "payment.amount",
-     payment.payment_date AS "payment.payment_date",
-     customer.customer_id AS "customer.customer_id",
-     customer.store_id AS "customer.store_id",
-     customer.first_name AS "customer.first_name",
-     customer.last_name AS "customer.last_name",
-     customer.email AS "customer.email",
-     customer.address_id AS "customer.address_id",
-     customer.activebool AS "customer.activebool",
-     customer.create_date AS "customer.create_date",
-     customer.last_update AS "customer.last_update",
-     customer.active AS "customer.active"
-FROM dvds.payment
-     INNER JOIN dvds.customer ON (payment.customer_id = customer.customer_id)
-ORDER BY payment.payment_id ASC
-LIMIT 30;
-`
-
 	query := SELECT(
 		Payment.AllColumns,
 		Customer.AllColumns,
@@ -78,81 +37,28 @@ LIMIT 30;
 		FROM(Payment.
 			INNER_JOIN(Customer, Payment.CustomerID.EQ(Customer.CustomerID))).
 		ORDER_BY(Payment.PaymentID.ASC()).
-		LIMIT(30)
-
-	testutils.AssertDebugStatementSql(t, query, expectedSQL, int64(30))
+		LIMIT(2)
 
 	dest := []model.Payment{}
 
-	err := query.Query(db, &dest)
-
-	require.NoError(t, err)
-	require.Equal(t, len(dest), 30)
-
-	requireLogged(t, query)
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
+	require.NoError(t, query.Query(db, &dest))
+	require.EqualValues(t, testparrot.RecordNext(t, dest), dest)
 }
 
 func TestSelect_ScanToSlice(t *testing.T) {
-	expectedSQL := `
-SELECT customer.customer_id AS "customer.customer_id",
-     customer.store_id AS "customer.store_id",
-     customer.first_name AS "customer.first_name",
-     customer.last_name AS "customer.last_name",
-     customer.email AS "customer.email",
-     customer.address_id AS "customer.address_id",
-     customer.activebool AS "customer.activebool",
-     customer.create_date AS "customer.create_date",
-     customer.last_update AS "customer.last_update",
-     customer.active AS "customer.active"
-FROM dvds.customer
-ORDER BY customer.customer_id ASC;
-`
 	customers := []model.Customer{}
-
 	query := Customer.SELECT(Customer.AllColumns).ORDER_BY(Customer.CustomerID.ASC())
 
-	testutils.AssertDebugStatementSql(t, query, expectedSQL)
-
-	err := query.Query(db, &customers)
-	require.NoError(t, err)
-
-	require.Equal(t, len(customers), 599)
-
-	testutils.AssertDeepEqual(t, customer0, customers[0])
-	testutils.AssertDeepEqual(t, customer1, customers[1])
-	testutils.AssertDeepEqual(t, lastCustomer, customers[598])
-
-	requireLogged(t, query)
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
+	require.NoError(t, query.Query(db, &customers))
+	require.Len(t, customers, 599)
+	require.EqualValues(t, testparrot.RecordNext(t, customers[0]), customers[0])
+	require.EqualValues(t, testparrot.RecordNext(t, customers[1]), customers[1])
+	require.EqualValues(t, testparrot.RecordNext(t, customers[598]), customers[598])
 }
 
 func TestSelectAndUnionInProjection(t *testing.T) {
-	expectedSQL := `
-SELECT payment.payment_id AS "payment.payment_id",
-     (
-          SELECT customer.customer_id AS "customer.customer_id"
-          FROM dvds.customer
-          LIMIT 1
-     ),
-     (
-          (
-               SELECT payment.payment_id AS "payment.payment_id"
-               FROM dvds.payment
-               LIMIT 1
-               OFFSET 10
-          )
-          UNION
-          (
-               SELECT payment.payment_id AS "payment.payment_id"
-               FROM dvds.payment
-               LIMIT 1
-               OFFSET 2
-          )
-          LIMIT 1
-     )
-FROM dvds.payment
-LIMIT 12;
-`
-
 	query := Payment.
 		SELECT(
 			Payment.PaymentID,
@@ -164,139 +70,59 @@ LIMIT 12;
 		).
 		LIMIT(12)
 
-	//fmt.Println(query.DebugSql())
-
-	testutils.AssertDebugStatementSql(t, query, expectedSQL, int64(1), int64(1), int64(10), int64(1), int64(2), int64(1), int64(12))
-
 	dest := []struct{}{}
-	err := query.Query(db, &dest)
-	require.NoError(t, err)
+
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
+	require.NoError(t, query.Query(db, &dest))
 }
 
 func TestJoinQueryStruct(t *testing.T) {
+	query := FilmActor.
+		INNER_JOIN(Actor, FilmActor.ActorID.EQ(Actor.ActorID)).
+		INNER_JOIN(Film, FilmActor.FilmID.EQ(Film.FilmID)).
+		INNER_JOIN(Language, Film.LanguageID.EQ(Language.LanguageID)).
+		INNER_JOIN(Inventory, Inventory.FilmID.EQ(Film.FilmID)).
+		INNER_JOIN(Rental, Rental.InventoryID.EQ(Inventory.InventoryID)).
+		SELECT(
+			FilmActor.AllColumns,
+			Film.AllColumns,
+			Language.AllColumns,
+			Actor.AllColumns,
+			Inventory.AllColumns,
+			Rental.AllColumns,
+		).
+		ORDER_BY(Film.FilmID.ASC()).
+		LIMIT(1000)
 
-	expectedSQL := `
-SELECT film_actor.actor_id AS "film_actor.actor_id",
-     film_actor.film_id AS "film_actor.film_id",
-     film_actor.last_update AS "film_actor.last_update",
-     film.film_id AS "film.film_id",
-     film.title AS "film.title",
-     film.description AS "film.description",
-     film.release_year AS "film.release_year",
-     film.language_id AS "film.language_id",
-     film.rental_duration AS "film.rental_duration",
-     film.rental_rate AS "film.rental_rate",
-     film.length AS "film.length",
-     film.replacement_cost AS "film.replacement_cost",
-     film.rating AS "film.rating",
-     film.last_update AS "film.last_update",
-     film.special_features AS "film.special_features",
-     film.fulltext AS "film.fulltext",
-     language.language_id AS "language.language_id",
-     language.name AS "language.name",
-     language.last_update AS "language.last_update",
-     actor.actor_id AS "actor.actor_id",
-     actor.first_name AS "actor.first_name",
-     actor.last_name AS "actor.last_name",
-     actor.last_update AS "actor.last_update",
-     inventory.inventory_id AS "inventory.inventory_id",
-     inventory.film_id AS "inventory.film_id",
-     inventory.store_id AS "inventory.store_id",
-     inventory.last_update AS "inventory.last_update",
-     rental.rental_id AS "rental.rental_id",
-     rental.rental_date AS "rental.rental_date",
-     rental.inventory_id AS "rental.inventory_id",
-     rental.customer_id AS "rental.customer_id",
-     rental.return_date AS "rental.return_date",
-     rental.staff_id AS "rental.staff_id",
-     rental.last_update AS "rental.last_update"
-FROM dvds.film_actor
-     INNER JOIN dvds.actor ON (film_actor.actor_id = actor.actor_id)
-     INNER JOIN dvds.film ON (film_actor.film_id = film.film_id)
-     INNER JOIN dvds.language ON (film.language_id = language.language_id)
-     INNER JOIN dvds.inventory ON (inventory.film_id = film.film_id)
-     INNER JOIN dvds.rental ON (rental.inventory_id = inventory.inventory_id)
-ORDER BY film.film_id ASC
-LIMIT 1000;
-`
-	for i := 0; i < 2; i++ {
-		query := FilmActor.
-			INNER_JOIN(Actor, FilmActor.ActorID.EQ(Actor.ActorID)).
-			INNER_JOIN(Film, FilmActor.FilmID.EQ(Film.FilmID)).
-			INNER_JOIN(Language, Film.LanguageID.EQ(Language.LanguageID)).
-			INNER_JOIN(Inventory, Inventory.FilmID.EQ(Film.FilmID)).
-			INNER_JOIN(Rental, Rental.InventoryID.EQ(Inventory.InventoryID)).
-			SELECT(
-				FilmActor.AllColumns,
-				Film.AllColumns,
-				Language.AllColumns,
-				Actor.AllColumns,
-				Inventory.AllColumns,
-				Rental.AllColumns,
-			).
-			//WHERE(FilmActor.ActorID.GtEqL(1).AND(FilmActor.ActorID.LtEqL(2))).
-			ORDER_BY(Film.FilmID.ASC()).
-			LIMIT(1000)
+	languageActorFilm := []struct {
+		model.Language
 
-		testutils.AssertDebugStatementSql(t, query, expectedSQL, int64(1000))
+		Films []struct {
+			model.Film
+			Actors []struct {
+				model.Actor
+			}
 
-		var languageActorFilm []struct {
-			model.Language
+			Inventory []struct {
+				model.Inventory
 
-			Films []struct {
-				model.Film
-				Actors []struct {
-					model.Actor
-				}
-
-				Inventory []struct {
-					model.Inventory
-
-					Rental []model.Rental
-				}
+				Rental []model.Rental
 			}
 		}
+	}{}
 
-		err := query.Query(db, &languageActorFilm)
-
-		require.NoError(t, err)
-		require.Equal(t, len(languageActorFilm), 1)
-		require.Equal(t, len(languageActorFilm[0].Films), 10)
-		require.Equal(t, len(languageActorFilm[0].Films[0].Actors), 10)
-	}
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
+	require.NoError(t, query.Query(db, &languageActorFilm))
+	require.Len(t, languageActorFilm, 1)
+	require.Len(t, languageActorFilm[0].Films, 10)
+	require.Len(t, languageActorFilm[0].Films[0].Actors, 10)
 }
 
 func TestJoinQuerySlice(t *testing.T) {
-	expectedSQL := `
-SELECT language.language_id AS "language.language_id",
-     language.name AS "language.name",
-     language.last_update AS "language.last_update",
-     film.film_id AS "film.film_id",
-     film.title AS "film.title",
-     film.description AS "film.description",
-     film.release_year AS "film.release_year",
-     film.language_id AS "film.language_id",
-     film.rental_duration AS "film.rental_duration",
-     film.rental_rate AS "film.rental_rate",
-     film.length AS "film.length",
-     film.replacement_cost AS "film.replacement_cost",
-     film.rating AS "film.rating",
-     film.last_update AS "film.last_update",
-     film.special_features AS "film.special_features",
-     film.fulltext AS "film.fulltext"
-FROM dvds.film
-     INNER JOIN dvds.language ON (film.language_id = language.language_id)
-WHERE film.rating = 'NC-17'
-LIMIT 15;
-`
-
-	type FilmsPerLanguage struct {
+	result := []struct {
 		Language *model.Language
 		Film     []model.Film
-	}
-
-	filmsPerLanguage := []FilmsPerLanguage{}
-	limit := 15
+	}{}
 
 	query := Film.
 		INNER_JOIN(Language, Film.LanguageID.EQ(Language.LanguageID)).
@@ -304,28 +130,21 @@ LIMIT 15;
 		WHERE(Film.Rating.EQ(enum.MpaaRating.Nc17)).
 		LIMIT(15)
 
-	testutils.AssertDebugStatementSql(t, query, expectedSQL, int64(15))
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
+	require.NoError(t, query.Query(db, &result))
+	require.EqualValues(t, testparrot.RecordNext(t, result), result)
 
-	err := query.Query(db, &filmsPerLanguage)
-
-	require.NoError(t, err)
-	require.Equal(t, len(filmsPerLanguage), 1)
-	require.Equal(t, len(filmsPerLanguage[0].Film), limit)
-
-	englishFilms := filmsPerLanguage[0]
-
-	require.Equal(t, *englishFilms.Film[0].Rating, model.MpaaRating_Nc17)
-
-	filmsPerLanguageWithPtrs := []*FilmsPerLanguage{}
-	err = query.Query(db, &filmsPerLanguageWithPtrs)
-
-	require.NoError(t, err)
-	require.Equal(t, len(filmsPerLanguage), 1)
-	require.Equal(t, len(filmsPerLanguage[0].Film), limit)
+	resultPtr := []*struct {
+		Language *model.Language
+		Film     []model.Film
+	}{}
+	require.NoError(t, query.Query(db, &resultPtr))
+	require.Equal(t, len(result), 1)
+	require.Equal(t, len(result[0].Film), 15)
 }
 
 func TestExecution1(t *testing.T) {
-	stmt := City.
+	query := City.
 		INNER_JOIN(Address, Address.CityID.EQ(City.CityID)).
 		INNER_JOIN(Customer, Customer.AddressID.EQ(Address.AddressID)).
 		SELECT(
@@ -339,67 +158,22 @@ func TestExecution1(t *testing.T) {
 		WHERE(City.City.EQ(String("London")).OR(City.City.EQ(String("York")))).
 		ORDER_BY(City.CityID, Address.AddressID, Customer.CustomerID)
 
-	testutils.AssertDebugStatementSql(t, stmt, `
-SELECT city.city_id AS "city.city_id",
-     city.city AS "city.city",
-     address.address_id AS "address.address_id",
-     address.address AS "address.address",
-     customer.customer_id AS "customer.customer_id",
-     customer.last_name AS "customer.last_name"
-FROM dvds.city
-     INNER JOIN dvds.address ON (address.city_id = city.city_id)
-     INNER JOIN dvds.customer ON (customer.address_id = address.address_id)
-WHERE (city.city = 'London') OR (city.city = 'York')
-ORDER BY city.city_id, address.address_id, customer.customer_id;
-`, "London", "York")
-
-	var dest []struct {
+	dest := []struct {
 		model.City
 
 		Customers []struct {
 			model.Customer
-
 			Address model.Address
 		}
-	}
+	}{}
 
-	err := stmt.Query(db, &dest)
-
-	require.NoError(t, err)
-
-	require.Equal(t, len(dest), 2)
-	require.Equal(t, dest[0].City.City, "London")
-	require.Equal(t, dest[1].City.City, "York")
-	require.Equal(t, len(dest[0].Customers), 2)
-	require.Equal(t, dest[0].Customers[0].LastName, "Hoffman")
-	require.Equal(t, dest[0].Customers[1].LastName, "Vines")
-
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
+	require.NoError(t, query.Query(db, &dest))
+	require.EqualValues(t, testparrot.RecordNext(t, dest), dest)
 }
 
 func TestExecution2(t *testing.T) {
-
-	type MyAddress struct {
-		ID          int32 `sql:"primary_key"`
-		AddressLine string
-	}
-
-	type MyCustomer struct {
-		ID       int32 `sql:"primary_key"`
-		LastName *string
-
-		Address MyAddress
-	}
-
-	type MyCity struct {
-		ID   int32 `sql:"primary_key"`
-		Name string
-
-		Customers []MyCustomer
-	}
-
-	dest := []MyCity{}
-
-	stmt := City.
+	query := City.
 		INNER_JOIN(Address, Address.CityID.EQ(City.CityID)).
 		INNER_JOIN(Customer, Customer.AddressID.EQ(Address.AddressID)).
 		SELECT(
@@ -413,51 +187,28 @@ func TestExecution2(t *testing.T) {
 		WHERE(City.City.EQ(String("London")).OR(City.City.EQ(String("York")))).
 		ORDER_BY(City.CityID, Address.AddressID, Customer.CustomerID)
 
-	testutils.AssertDebugStatementSql(t, stmt, `
-SELECT city.city_id AS "my_city.id",
-     city.city AS "myCity.Name",
-     address.address_id AS "My_Address.id",
-     address.address AS "my address.address line",
-     customer.customer_id AS "my_customer.id",
-     customer.last_name AS "my_customer.last_name"
-FROM dvds.city
-     INNER JOIN dvds.address ON (address.city_id = city.city_id)
-     INNER JOIN dvds.customer ON (customer.address_id = address.address_id)
-WHERE (city.city = 'London') OR (city.city = 'York')
-ORDER BY city.city_id, address.address_id, customer.customer_id;
-`, "London", "York")
-
-	err := stmt.Query(db, &dest)
-
-	require.NoError(t, err)
-
-	require.Equal(t, len(dest), 2)
-	require.Equal(t, dest[0].Name, "London")
-	require.Equal(t, dest[1].Name, "York")
-	require.Equal(t, len(dest[0].Customers), 2)
-	require.Equal(t, *dest[0].Customers[0].LastName, "Hoffman")
-	require.Equal(t, *dest[0].Customers[1].LastName, "Vines")
-
-}
-
-func TestExecution3(t *testing.T) {
-
-	var dest []struct {
-		CityID   int32 `sql:"primary_key"`
-		CityName string
+	dest := []struct {
+		ID   int32 `sql:"primary_key"`
+		Name string
 
 		Customers []struct {
-			CustomerID int32 `sql:"primary_key"`
-			LastName   *string
+			ID       int32 `sql:"primary_key"`
+			LastName *string
 
 			Address struct {
-				AddressID   int32 `sql:"primary_key"`
+				ID          int32 `sql:"primary_key"`
 				AddressLine string
 			}
 		}
-	}
+	}{}
 
-	stmt := City.
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
+	require.NoError(t, query.Query(db, &dest))
+	require.EqualValues(t, testparrot.RecordNext(t, dest), dest)
+}
+
+func TestExecution3(t *testing.T) {
+	query := City.
 		INNER_JOIN(Address, Address.CityID.EQ(City.CityID)).
 		INNER_JOIN(Customer, Customer.AddressID.EQ(Address.AddressID)).
 		SELECT(
@@ -471,50 +222,28 @@ func TestExecution3(t *testing.T) {
 		WHERE(City.City.EQ(String("London")).OR(City.City.EQ(String("York")))).
 		ORDER_BY(City.CityID, Address.AddressID, Customer.CustomerID)
 
-	testutils.AssertDebugStatementSql(t, stmt, `
-SELECT city.city_id AS "city_id",
-     city.city AS "city_name",
-     customer.customer_id AS "customer_id",
-     customer.last_name AS "last_name",
-     address.address_id AS "address_id",
-     address.address AS "address_line"
-FROM dvds.city
-     INNER JOIN dvds.address ON (address.city_id = city.city_id)
-     INNER JOIN dvds.customer ON (customer.address_id = address.address_id)
-WHERE (city.city = 'London') OR (city.city = 'York')
-ORDER BY city.city_id, address.address_id, customer.customer_id;
-`, "London", "York")
+	dest := []struct {
+		CityID   int32 `sql:"primary_key"`
+		CityName string
 
-	err := stmt.Query(db, &dest)
+		Customers []struct {
+			CustomerID int32 `sql:"primary_key"`
+			LastName   *string
 
-	require.NoError(t, err)
+			Address struct {
+				AddressID   int32 `sql:"primary_key"`
+				AddressLine string
+			}
+		}
+	}{}
 
-	require.Equal(t, len(dest), 2)
-	require.Equal(t, dest[0].CityName, "London")
-	require.Equal(t, dest[1].CityName, "York")
-	require.Equal(t, len(dest[0].Customers), 2)
-	require.Equal(t, *dest[0].Customers[0].LastName, "Hoffman")
-	require.Equal(t, *dest[0].Customers[1].LastName, "Vines")
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
+	require.NoError(t, query.Query(db, &dest))
+	require.EqualValues(t, testparrot.RecordNext(t, dest), dest)
 }
 
 func TestExecution4(t *testing.T) {
-
-	var dest []struct {
-		CityID   int32  `sql:"primary_key" alias:"city.city_id"`
-		CityName string `alias:"city.city"`
-
-		Customers []struct {
-			CustomerID int32   `sql:"primary_key" alias:"customer_id"`
-			LastName   *string `alias:"last_name"`
-
-			Address struct {
-				AddressID   int32  `sql:"primary_key" alias:"AddressId"`
-				AddressLine string `alias:"address.address"`
-			} `alias:"address.*"`
-		} `alias:"customer"`
-	}
-
-	stmt := City.
+	query := City.
 		INNER_JOIN(Address, Address.CityID.EQ(City.CityID)).
 		INNER_JOIN(Customer, Customer.AddressID.EQ(Address.AddressID)).
 		SELECT(
@@ -528,314 +257,145 @@ func TestExecution4(t *testing.T) {
 		WHERE(City.City.EQ(String("London")).OR(City.City.EQ(String("York")))).
 		ORDER_BY(City.CityID, Address.AddressID, Customer.CustomerID)
 
-	testutils.AssertDebugStatementSql(t, stmt, `
-SELECT city.city_id AS "city.city_id",
-     city.city AS "city.city",
-     customer.customer_id AS "customer.customer_id",
-     customer.last_name AS "customer.last_name",
-     address.address_id AS "address.address_id",
-     address.address AS "address.address"
-FROM dvds.city
-     INNER JOIN dvds.address ON (address.city_id = city.city_id)
-     INNER JOIN dvds.customer ON (customer.address_id = address.address_id)
-WHERE (city.city = 'London') OR (city.city = 'York')
-ORDER BY city.city_id, address.address_id, customer.customer_id;
-`, "London", "York")
+	dest := []struct {
+		CityID   int32  `sql:"primary_key" alias:"city.city_id"`
+		CityName string `alias:"city.city"`
 
-	err := stmt.Query(db, &dest)
+		Customers []struct {
+			CustomerID int32   `sql:"primary_key" alias:"customer_id"`
+			LastName   *string `alias:"last_name"`
 
-	require.NoError(t, err)
-	require.Equal(t, len(dest), 2)
-	testutils.AssertJSON(t, dest, `
-[
-	{
-		"CityID": 312,
-		"CityName": "London",
-		"Customers": [
-			{
-				"CustomerID": 252,
-				"LastName": "Hoffman",
-				"Address": {
-					"AddressID": 256,
-					"AddressLine": "1497 Yuzhou Drive"
-				}
-			},
-			{
-				"CustomerID": 512,
-				"LastName": "Vines",
-				"Address": {
-					"AddressID": 517,
-					"AddressLine": "548 Uruapan Street"
-				}
-			}
-		]
-	},
-	{
-		"CityID": 589,
-		"CityName": "York",
-		"Customers": [
-			{
-				"CustomerID": 497,
-				"LastName": "Sledge",
-				"Address": {
-					"AddressID": 502,
-					"AddressLine": "1515 Korla Way"
-				}
-			}
-		]
-	}
-]
-`)
+			Address struct {
+				AddressID   int32  `sql:"primary_key" alias:"AddressId"`
+				AddressLine string `alias:"address.address"`
+			} `alias:"address.*"`
+		} `alias:"customer"`
+	}{}
+
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
+	require.NoError(t, query.Query(db, &dest))
+	require.EqualValues(t, testparrot.RecordNext(t, dest), dest)
 }
 
 func TestJoinQuerySliceWithPtrs(t *testing.T) {
-	type FilmsPerLanguage struct {
-		Language model.Language
-		Film     *[]*model.Film
-	}
-
 	limit := int64(3)
 
 	query := Film.INNER_JOIN(Language, Film.LanguageID.EQ(Language.LanguageID)).
 		SELECT(Language.AllColumns, Film.AllColumns).
 		LIMIT(limit)
 
-	filmsPerLanguageWithPtrs := []*FilmsPerLanguage{}
-	err := query.Query(db, &filmsPerLanguageWithPtrs)
+	dest := []*struct {
+		Language model.Language
+		Film     *[]*model.Film
+	}{}
 
-	require.NoError(t, err)
-	require.Equal(t, len(filmsPerLanguageWithPtrs), 1)
-	require.Equal(t, len(*filmsPerLanguageWithPtrs[0].Film), int(limit))
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
+	require.NoError(t, query.Query(db, &dest))
+	require.Len(t, dest, 1)
+	require.Len(t, *dest[0].Film, int(limit))
 }
 
 func TestSelect_WithoutUniqueColumnSelected(t *testing.T) {
 	query := Customer.SELECT(Customer.FirstName, Customer.LastName, Customer.Email)
+	dest := []model.Customer{}
 
-	customers := []model.Customer{}
-
-	err := query.Query(db, &customers)
-
-	require.NoError(t, err)
-
-	//spew.Dump(customers)
-
-	require.Equal(t, len(customers), 599)
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
+	require.NoError(t, query.Query(db, &dest))
+	require.Len(t, dest, 599)
 }
 
 func TestSelectOrderByAscDesc(t *testing.T) {
-	customersAsc := []model.Customer{}
+	asc := []model.Customer{}
 
-	err := Customer.SELECT(Customer.CustomerID, Customer.FirstName, Customer.LastName).
-		ORDER_BY(Customer.FirstName.ASC()).
-		Query(db, &customersAsc)
+	query := Customer.SELECT(Customer.CustomerID, Customer.FirstName, Customer.LastName).
+		ORDER_BY(Customer.FirstName.ASC())
 
-	require.NoError(t, err)
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
+	require.NoError(t, query.Query(db, &asc))
 
-	firstCustomerAsc := customersAsc[0]
-	lastCustomerAsc := customersAsc[len(customersAsc)-1]
+	firstAsc := asc[0]
+	lastAsc := asc[len(asc)-1]
 
-	customersDesc := []model.Customer{}
-	err = Customer.SELECT(Customer.CustomerID, Customer.FirstName, Customer.LastName).
-		ORDER_BY(Customer.FirstName.DESC()).
-		Query(db, &customersDesc)
+	desc := []model.Customer{}
+	query = Customer.SELECT(Customer.CustomerID, Customer.FirstName, Customer.LastName).
+		ORDER_BY(Customer.FirstName.DESC())
 
-	require.NoError(t, err)
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
+	require.NoError(t, query.Query(db, &desc))
 
-	firstCustomerDesc := customersDesc[0]
-	lastCustomerDesc := customersDesc[len(customersAsc)-1]
+	firstDesc := desc[0]
+	lastDesc := desc[len(desc)-1]
 
-	testutils.AssertDeepEqual(t, firstCustomerAsc, lastCustomerDesc)
-	testutils.AssertDeepEqual(t, lastCustomerAsc, firstCustomerDesc)
+	require.EqualValues(t, firstAsc, lastDesc)
+	require.EqualValues(t, lastAsc, firstDesc)
 
-	customersAscDesc := []model.Customer{}
-	err = Customer.SELECT(Customer.CustomerID, Customer.FirstName, Customer.LastName).
-		ORDER_BY(Customer.FirstName.ASC(), Customer.LastName.DESC()).
-		Query(db, &customersAscDesc)
+	ascDesc := []model.Customer{}
+	query = Customer.SELECT(Customer.CustomerID, Customer.FirstName, Customer.LastName).
+		ORDER_BY(Customer.FirstName.ASC(), Customer.LastName.DESC())
 
-	require.NoError(t, err)
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
+	require.NoError(t, query.Query(db, &ascDesc))
 
-	customerAscDesc326 := model.Customer{
-		CustomerID: 67,
-		FirstName:  "Kelly",
-		LastName:   "Torres",
-	}
-
-	customerAscDesc327 := model.Customer{
-		CustomerID: 546,
-		FirstName:  "Kelly",
-		LastName:   "Knott",
-	}
-
-	testutils.AssertDeepEqual(t, customerAscDesc326, customersAscDesc[326])
-	testutils.AssertDeepEqual(t, customerAscDesc327, customersAscDesc[327])
+	require.EqualValues(t, testparrot.RecordNext(t, ascDesc[326:328]), ascDesc[326:328])
 }
 
 func TestSelectFullJoin(t *testing.T) {
-	expectedSQL := `
-SELECT customer.customer_id AS "customer.customer_id",
-     customer.store_id AS "customer.store_id",
-     customer.first_name AS "customer.first_name",
-     customer.last_name AS "customer.last_name",
-     customer.email AS "customer.email",
-     customer.address_id AS "customer.address_id",
-     customer.activebool AS "customer.activebool",
-     customer.create_date AS "customer.create_date",
-     customer.last_update AS "customer.last_update",
-     customer.active AS "customer.active",
-     address.address_id AS "address.address_id",
-     address.address AS "address.address",
-     address.address2 AS "address.address2",
-     address.district AS "address.district",
-     address.city_id AS "address.city_id",
-     address.postal_code AS "address.postal_code",
-     address.phone AS "address.phone",
-     address.last_update AS "address.last_update"
-FROM dvds.customer
-     FULL JOIN dvds.address ON (customer.address_id = address.address_id)
-ORDER BY customer.customer_id ASC;
-`
 	query := Customer.
 		FULL_JOIN(Address, Customer.AddressID.EQ(Address.AddressID)).
 		SELECT(Customer.AllColumns, Address.AllColumns).
 		ORDER_BY(Customer.CustomerID.ASC())
 
-	testutils.AssertDebugStatementSql(t, query, expectedSQL)
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
 
-	allCustomersAndAddress := []struct {
+	dest := []struct {
 		Address  *model.Address
 		Customer *model.Customer
 	}{}
 
-	err := query.Query(db, &allCustomersAndAddress)
-
-	require.NoError(t, err)
-	require.Equal(t, len(allCustomersAndAddress), 603)
-
-	testutils.AssertDeepEqual(t, allCustomersAndAddress[0].Customer, &customer0)
-	require.True(t, allCustomersAndAddress[0].Address != nil)
-
-	lastCustomerAddress := allCustomersAndAddress[len(allCustomersAndAddress)-1]
-
-	require.True(t, lastCustomerAddress.Customer == nil)
-	require.True(t, lastCustomerAddress.Address != nil)
-
+	require.NoError(t, query.Query(db, &dest))
+	require.Equal(t, len(dest), 603)
+	require.EqualValues(t, testparrot.RecordNext(t, dest[len(dest)-1]), dest[len(dest)-1])
 }
 
 func TestSelectFullCrossJoin(t *testing.T) {
-	expectedSQL := `
-SELECT customer.customer_id AS "customer.customer_id",
-     customer.store_id AS "customer.store_id",
-     customer.first_name AS "customer.first_name",
-     customer.last_name AS "customer.last_name",
-     customer.email AS "customer.email",
-     customer.address_id AS "customer.address_id",
-     customer.activebool AS "customer.activebool",
-     customer.create_date AS "customer.create_date",
-     customer.last_update AS "customer.last_update",
-     customer.active AS "customer.active",
-     address.address_id AS "address.address_id",
-     address.address AS "address.address",
-     address.address2 AS "address.address2",
-     address.district AS "address.district",
-     address.city_id AS "address.city_id",
-     address.postal_code AS "address.postal_code",
-     address.phone AS "address.phone",
-     address.last_update AS "address.last_update"
-FROM dvds.customer
-     CROSS JOIN dvds.address
-ORDER BY customer.customer_id ASC
-LIMIT 1000;
-`
 	query := Customer.
 		CROSS_JOIN(Address).
 		SELECT(Customer.AllColumns, Address.AllColumns).
 		ORDER_BY(Customer.CustomerID.ASC()).
 		LIMIT(1000)
 
-	testutils.AssertDebugStatementSql(t, query, expectedSQL, int64(1000))
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
 
-	var customerAddresCrosJoined []struct {
+	dest := []struct {
 		model.Customer
 		model.Address
-	}
+	}{}
 
-	err := query.Query(db, &customerAddresCrosJoined)
-
-	require.Equal(t, len(customerAddresCrosJoined), 1000)
-
-	require.NoError(t, err)
+	require.NoError(t, query.Query(db, &dest))
+	require.Len(t, dest, 1000)
+	require.EqualValues(t, testparrot.RecordNext(t, dest[len(dest)-1]), dest[len(dest)-1])
 }
 
 func TestSelectSelfJoin(t *testing.T) {
-	expectedSQL := `
-SELECT f1.film_id AS "f1.film_id",
-     f1.title AS "f1.title",
-     f1.description AS "f1.description",
-     f1.release_year AS "f1.release_year",
-     f1.language_id AS "f1.language_id",
-     f1.rental_duration AS "f1.rental_duration",
-     f1.rental_rate AS "f1.rental_rate",
-     f1.length AS "f1.length",
-     f1.replacement_cost AS "f1.replacement_cost",
-     f1.rating AS "f1.rating",
-     f1.last_update AS "f1.last_update",
-     f1.special_features AS "f1.special_features",
-     f1.fulltext AS "f1.fulltext",
-     f2.film_id AS "f2.film_id",
-     f2.title AS "f2.title",
-     f2.description AS "f2.description",
-     f2.release_year AS "f2.release_year",
-     f2.language_id AS "f2.language_id",
-     f2.rental_duration AS "f2.rental_duration",
-     f2.rental_rate AS "f2.rental_rate",
-     f2.length AS "f2.length",
-     f2.replacement_cost AS "f2.replacement_cost",
-     f2.rating AS "f2.rating",
-     f2.last_update AS "f2.last_update",
-     f2.special_features AS "f2.special_features",
-     f2.fulltext AS "f2.fulltext"
-FROM dvds.film AS f1
-     INNER JOIN dvds.film AS f2 ON ((f1.film_id < f2.film_id) AND (f1.length = f2.length))
-ORDER BY f1.film_id ASC;
-`
 	f1 := Film.AS("f1")
-
 	f2 := Film.AS("f2")
-
 	query := f1.
 		INNER_JOIN(f2, f1.FilmID.LT(f2.FilmID).AND(f1.Length.EQ(f2.Length))).
 		SELECT(f1.AllColumns, f2.AllColumns).
 		ORDER_BY(f1.FilmID.ASC())
 
-	testutils.AssertDebugStatementSql(t, query, expectedSQL)
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
 
-	type F1 model.Film
-	type F2 model.Film
-
-	theSameLengthFilms := []struct {
-		F1 F1
-		F2 F2
+	dest := []struct {
+		F1 model.Film `alias:"f1.*"`
+		F2 model.Film `alias:"f2.*"`
 	}{}
 
-	err := query.Query(db, &theSameLengthFilms)
-
-	require.NoError(t, err)
-
-	//spew.Dump(theSameLengthFilms)
-
-	//require.Equal(t, len(theSameLengthFilms), 100)
+	require.NoError(t, query.Query(db, &dest))
+	require.EqualValues(t, testparrot.RecordNext(t, dest[len(dest)-1]), dest[len(dest)-1])
 }
 
 func TestSelectAliasColumn(t *testing.T) {
-	expectedSQL := `
-SELECT f1.title AS "thesame_length_films.title1",
-     f2.title AS "thesame_length_films.title2",
-     f1.length AS "thesame_length_films.length"
-FROM dvds.film AS f1
-     INNER JOIN dvds.film AS f2 ON ((f1.film_id != f2.film_id) AND (f1.length = f2.length))
-ORDER BY f1.length ASC, f1.title ASC, f2.title ASC
-LIMIT 1000;
-`
 	f1 := Film.AS("f1")
 	f2 := Film.AS("f2")
 
@@ -843,54 +403,26 @@ LIMIT 1000;
 
 	query := f1.
 		INNER_JOIN(f2, f1.FilmID.NOT_EQ(f2.FilmID).AND(f1.Length.EQ(f2.Length))).
-		SELECT(f1.Title.AS("thesame_length_films.title1"),
-			f2.Title.AS("thesame_length_films.title2"),
-			f1.Length.AS("thesame_length_films.length")).
+		SELECT(f1.Title.AS("title1"),
+			f2.Title.AS("title2"),
+			f1.Length.AS("length")).
 		ORDER_BY(f1.Length.ASC(), f1.Title.ASC(), f2.Title.ASC()).
 		LIMIT(1000)
 
-	testutils.AssertDebugStatementSql(t, query, expectedSQL, int64(1000))
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
 
-	type thesameLengthFilms struct {
+	films := []struct {
 		Title1 string
 		Title2 string
 		Length int16
-	}
-	films := []thesameLengthFilms{}
+	}{}
 
-	err := query.Query(db, &films)
-
-	require.NoError(t, err)
-
-	//spew.Dump(films)
-
-	require.Equal(t, len(films), 1000)
-	testutils.AssertDeepEqual(t, films[0], thesameLengthFilms{"Alien Center", "Iron Moon", 46})
+	require.NoError(t, query.Query(db, &films))
+	require.Len(t, films, 1000)
+	require.EqualValues(t, testparrot.RecordNext(t, films[0]), films[0])
 }
 
 func TestSubQuery(t *testing.T) {
-	expectedQuery := `
-SELECT actor.actor_id AS "actor.actor_id",
-     actor.first_name AS "actor.first_name",
-     actor.last_name AS "actor.last_name",
-     actor.last_update AS "actor.last_update",
-     film_actor.actor_id AS "film_actor.actor_id",
-     film_actor.film_id AS "film_actor.film_id",
-     film_actor.last_update AS "film_actor.last_update",
-     "rFilms"."film.film_id" AS "film.film_id",
-     "rFilms"."film.title" AS "film.title",
-     "rFilms"."film.rating" AS "film.rating"
-FROM dvds.actor
-     INNER JOIN dvds.film_actor ON (actor.actor_id = film_actor.film_id)
-     INNER JOIN (
-          SELECT film.film_id AS "film.film_id",
-               film.title AS "film.title",
-               film.rating AS "film.rating"
-          FROM dvds.film
-          WHERE film.rating = 'R'
-     ) AS "rFilms" ON (film_actor.film_id = "rFilms"."film.film_id");
-`
-
 	rRatingFilms := Film.
 		SELECT(
 			Film.FilmID,
@@ -911,59 +443,25 @@ FROM dvds.actor
 			rRatingFilms.AllColumns(),
 		)
 
-	testutils.AssertDebugStatementSql(t, query, expectedQuery)
-
 	dest := []model.Actor{}
 
-	err := query.Query(db, &dest)
-
-	require.NoError(t, err)
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
+	require.NoError(t, query.Query(db, &dest))
 }
 
 func TestSelectFunctions(t *testing.T) {
-	expectedQuery := `
-SELECT MAX(film.rental_rate) AS "max_film_rate"
-FROM dvds.film;
-`
 	query := Film.SELECT(
 		MAXf(Film.RentalRate).AS("max_film_rate"),
 	)
 
-	testutils.AssertDebugStatementSql(t, query, expectedQuery)
+	result := struct{ MaxFilmRate float64 }{}
 
-	ret := struct {
-		MaxFilmRate float64
-	}{}
-
-	err := query.Query(db, &ret)
-
-	require.NoError(t, err)
-	require.Equal(t, ret.MaxFilmRate, 4.99)
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
+	require.NoError(t, query.Query(db, &result))
+	require.EqualValues(t, testparrot.RecordNext(t, result), result)
 }
 
 func TestSelectQueryScalar(t *testing.T) {
-	expectedSQL := `
-SELECT film.film_id AS "film.film_id",
-     film.title AS "film.title",
-     film.description AS "film.description",
-     film.release_year AS "film.release_year",
-     film.language_id AS "film.language_id",
-     film.rental_duration AS "film.rental_duration",
-     film.rental_rate AS "film.rental_rate",
-     film.length AS "film.length",
-     film.replacement_cost AS "film.replacement_cost",
-     film.rating AS "film.rating",
-     film.last_update AS "film.last_update",
-     film.special_features AS "film.special_features",
-     film.fulltext AS "film.fulltext"
-FROM dvds.film
-WHERE film.rental_rate = (
-          SELECT MAX(film.rental_rate)
-          FROM dvds.film
-     )
-ORDER BY film.film_id ASC;
-`
-
 	maxFilmRentalRate := FloatExp(
 		Film.
 			SELECT(MAXf(Film.RentalRate)),
@@ -974,59 +472,15 @@ ORDER BY film.film_id ASC;
 		WHERE(Film.RentalRate.EQ(maxFilmRentalRate)).
 		ORDER_BY(Film.FilmID.ASC())
 
-	testutils.AssertDebugStatementSql(t, query, expectedSQL)
+	dest := []model.Film{}
 
-	maxRentalRateFilms := []model.Film{}
-	err := query.Query(db, &maxRentalRateFilms)
-
-	require.NoError(t, err)
-
-	require.Equal(t, len(maxRentalRateFilms), 336)
-
-	gRating := model.MpaaRating_G
-
-	testutils.AssertDeepEqual(t, maxRentalRateFilms[0], model.Film{
-		FilmID:          2,
-		Title:           "Ace Goldfinger",
-		Description:     testutils.StringPtr("A Astounding Epistle of a Database Administrator And a Explorer who must Find a Car in Ancient China"),
-		ReleaseYear:     testutils.Int32Ptr(2006),
-		LanguageID:      1,
-		RentalRate:      4.99,
-		Length:          testutils.Int16Ptr(48),
-		ReplacementCost: 12.99,
-		Rating:          &gRating,
-		RentalDuration:  3,
-		LastUpdate:      *testutils.TimestampWithoutTimeZone("2013-05-26 14:50:58.951", 3),
-		SpecialFeatures: testutils.StringPtr("{Trailers,\"Deleted Scenes\"}"),
-		Fulltext:        "'ace':1 'administr':9 'ancient':19 'astound':4 'car':17 'china':20 'databas':8 'epistl':5 'explor':12 'find':15 'goldfing':2 'must':14",
-	})
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
+	require.NoError(t, query.Query(db, &dest))
+	require.Len(t, dest, testparrot.RecordNext(t, len(dest)).(int))
+	require.EqualValues(t, testparrot.RecordNext(t, dest[0]), dest[0])
 }
 
 func TestSelectGroupByHaving(t *testing.T) {
-	expectedSQL := `
-SELECT customer.customer_id AS "customer.customer_id",
-     customer.store_id AS "customer.store_id",
-     customer.first_name AS "customer.first_name",
-     customer.last_name AS "customer.last_name",
-     customer.email AS "customer.email",
-     customer.address_id AS "customer.address_id",
-     customer.activebool AS "customer.activebool",
-     customer.create_date AS "customer.create_date",
-     customer.last_update AS "customer.last_update",
-     customer.active AS "customer.active",
-     SUM(payment.amount) AS "amount.sum",
-     AVG(payment.amount) AS "amount.avg",
-     MAX(payment.payment_date) AS "amount.max_date",
-     MAX(payment.amount) AS "amount.max",
-     MIN(payment.payment_date) AS "amount.min_date",
-     MIN(payment.amount) AS "amount.min",
-     COUNT(payment.amount) AS "amount.count"
-FROM dvds.payment
-     INNER JOIN dvds.customer ON (customer.customer_id = payment.customer_id)
-GROUP BY customer.customer_id
-HAVING SUM(payment.amount) > 125.6
-ORDER BY customer.customer_id, SUM(payment.amount) ASC;
-`
 	query := Payment.
 		INNER_JOIN(Customer, Customer.CustomerID.EQ(Payment.CustomerID)).
 		SELECT(
@@ -1048,11 +502,7 @@ ORDER BY customer.customer_id, SUM(payment.amount) ASC;
 			Customer.CustomerID, SUMf(Payment.Amount).ASC(),
 		)
 
-	//fmt.Println(query.DebugSql())
-
-	testutils.AssertDebugStatementSql(t, query, expectedSQL, float64(125.6))
-
-	var dest []struct {
+	dest := []struct {
 		model.Customer
 
 		Amount struct {
@@ -1062,43 +512,15 @@ ORDER BY customer.customer_id, SUM(payment.amount) ASC;
 			Min   float64
 			Count int64
 		} `alias:"amount"`
-	}
+	}{}
 
-	err := query.Query(db, &dest)
-
-	require.NoError(t, err)
-
-	//testutils.PrintJson(dest)
-
-	require.Equal(t, len(dest), 104)
-
-	//testutils.SaveJsonFile(dest, "postgres/testdata/customer_payment_sum.json")
-	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/customer_payment_sum.json")
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
+	require.NoError(t, query.Query(db, &dest))
+	require.Len(t, dest, testparrot.RecordNext(t, len(dest)).(int))
+	require.EqualValues(t, testparrot.RecordNext(t, dest[0]), dest[0])
 }
 
 func TestSelectGroupBy2(t *testing.T) {
-	expectedSQL := `
-SELECT customer.customer_id AS "customer.customer_id",
-     customer.store_id AS "customer.store_id",
-     customer.first_name AS "customer.first_name",
-     customer.last_name AS "customer.last_name",
-     customer.email AS "customer.email",
-     customer.address_id AS "customer.address_id",
-     customer.activebool AS "customer.activebool",
-     customer.create_date AS "customer.create_date",
-     customer.last_update AS "customer.last_update",
-     customer.active AS "customer.active",
-     customer_payment_sum.amount_sum AS "CustomerWithAmounts.AmountSum"
-FROM dvds.customer
-     INNER JOIN (
-          SELECT payment.customer_id AS "payment.customer_id",
-               SUM(payment.amount) AS "amount_sum"
-          FROM dvds.payment
-          GROUP BY payment.customer_id
-     ) AS customer_payment_sum ON (customer.customer_id = customer_payment_sum."payment.customer_id")
-ORDER BY customer_payment_sum.amount_sum ASC;
-`
-
 	customersPayments := Payment.
 		SELECT(
 			Payment.CustomerID,
@@ -1118,131 +540,82 @@ ORDER BY customer_payment_sum.amount_sum ASC;
 		).
 		ORDER_BY(amountSum.ASC())
 
-	testutils.AssertDebugStatementSql(t, query, expectedSQL)
-
-	type CustomerWithAmounts struct {
+	dest := []struct {
 		Customer  *model.Customer
 		AmountSum float64
-	}
-	customersWithAmounts := []CustomerWithAmounts{}
+	}{}
 
-	err := query.Query(db, &customersWithAmounts)
-	require.NoError(t, err)
-	require.Equal(t, len(customersWithAmounts), 599)
-
-	testutils.AssertDeepEqual(t, customersWithAmounts[0].Customer, &model.Customer{
-		CustomerID: 318,
-		StoreID:    1,
-		FirstName:  "Brian",
-		LastName:   "Wyman",
-		AddressID:  323,
-		Email:      testutils.StringPtr("brian.wyman@sakilacustomer.org"),
-		Activebool: true,
-		CreateDate: *testutils.TimestampWithoutTimeZone("2006-02-14 00:00:00", 0),
-		LastUpdate: testutils.TimestampWithoutTimeZone("2013-05-26 14:49:45.738", 3),
-		Active:     testutils.Int32Ptr(1),
-	})
-
-	require.Equal(t, customersWithAmounts[0].AmountSum, 27.93)
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
+	require.NoError(t, query.Query(db, &dest))
+	require.Len(t, dest, testparrot.RecordNext(t, len(dest)).(int))
+	require.EqualValues(t, testparrot.RecordNext(t, dest[0]), dest[0])
 }
 
 func TestSelectStaff(t *testing.T) {
-	staffs := []model.Staff{}
+	query := Staff.SELECT(Staff.AllColumns)
+	dest := []model.Staff{}
 
-	err := Staff.SELECT(Staff.AllColumns).Query(db, &staffs)
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
+	require.NoError(t, query.Query(db, &dest))
+	require.EqualValues(t, testparrot.RecordNext(t, dest), dest)
+}
 
+type JSONResult struct{ qrm.JSON }
+
+func TestSelectJoinJSON(t *testing.T) {
+	query := Film.
+		SELECT(
+			JSONB_BUILD_OBJECT(
+				String("title"), Film.Title,
+				String("description"), Film.Description,
+				String("rating"), Film.Rating,
+				String("length"), Film.Length,
+				String("actors"), Actor.
+					LEFT_JOIN(FilmActor, FilmActor.ActorID.EQ(Actor.ActorID)).
+					SELECT(
+						JSON_AGG(Actor.FirstName.CONCAT(String(" ")).CONCAT(Actor.LastName)),
+					).WHERE(Film.FilmID.EQ(FilmActor.FilmID)),
+				String("language"), Language.
+					SELECT(
+						CAST(
+							ROW_TO_JSON(Language.TableName()),
+						).AS_JSONB().DELETE_KEY(String("language_id")),
+					).
+					WHERE(Film.LanguageID.EQ(Language.LanguageID)).
+					LIMIT(1),
+			).AS("json"),
+		).
+		LIMIT(2)
+
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
+
+	result := []JSONResult{}
+
+	err := query.Query(db, &result)
 	require.NoError(t, err)
 
-	testutils.AssertJSON(t, staffs, `
-[
-	{
-		"StaffID": 1,
-		"FirstName": "Mike",
-		"LastName": "Hillyer",
-		"AddressID": 3,
-		"Email": "Mike.Hillyer@sakilastaff.com",
-		"StoreID": 1,
-		"Active": true,
-		"Username": "Mike",
-		"Password": "8cb2237d0679ca88db6464eac60da96345513964",
-		"LastUpdate": "2006-05-16T16:13:11.79328Z",
-		"Picture": "iVBORw0KWgo="
-	},
-	{
-		"StaffID": 2,
-		"FirstName": "Jon",
-		"LastName": "Stephens",
-		"AddressID": 4,
-		"Email": "Jon.Stephens@sakilastaff.com",
-		"StoreID": 2,
-		"Active": true,
-		"Username": "Jon",
-		"Password": "8cb2237d0679ca88db6464eac60da96345513964",
-		"LastUpdate": "2006-05-16T16:13:11.79328Z",
-		"Picture": null
-	}
-]
-`)
+	require.Len(t, result, 2)
+	require.EqualValues(t, testparrot.RecordNext(t, result), result)
+
+	m := map[string]interface{}{}
+	json.Unmarshal(result[0].JSON, &m)
+	require.EqualValues(t, testparrot.RecordNext(t, m), m)
 }
 
 func TestSelectTimeColumns(t *testing.T) {
-
-	expectedSQL := `
-SELECT payment.payment_id AS "payment.payment_id",
-     payment.customer_id AS "payment.customer_id",
-     payment.staff_id AS "payment.staff_id",
-     payment.rental_id AS "payment.rental_id",
-     payment.amount AS "payment.amount",
-     payment.payment_date AS "payment.payment_date"
-FROM dvds.payment
-WHERE payment.payment_date < '2007-02-14 22:16:01'::timestamp without time zone
-ORDER BY payment.payment_date ASC;
-`
-
 	query := Payment.SELECT(Payment.AllColumns).
 		WHERE(Payment.PaymentDate.LT(Timestamp(2007, time.February, 14, 22, 16, 01, 0))).
 		ORDER_BY(Payment.PaymentDate.ASC())
 
-	testutils.AssertDebugStatementSql(t, query, expectedSQL, "2007-02-14 22:16:01")
+	dest := []model.Payment{}
 
-	payments := []model.Payment{}
-
-	err := query.Query(db, &payments)
-
-	require.NoError(t, err)
-
-	//spew.Dump(payments)
-
-	require.Equal(t, len(payments), 9)
-	testutils.AssertDeepEqual(t, payments[0], model.Payment{
-		PaymentID:   17793,
-		CustomerID:  416,
-		StaffID:     2,
-		RentalID:    1158,
-		Amount:      2.99,
-		PaymentDate: *testutils.TimestampWithoutTimeZone("2007-02-14 21:21:59.996577", 6),
-	})
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
+	require.NoError(t, query.Query(db, &dest))
+	require.Len(t, dest, testparrot.RecordNext(t, len(dest)).(int))
+	require.EqualValues(t, testparrot.RecordNext(t, dest[0]), dest[0])
 }
 
 func TestUnion(t *testing.T) {
-	expectedQuery := `
-(
-     SELECT payment.payment_id AS "payment.payment_id",
-          payment.amount AS "payment.amount"
-     FROM dvds.payment
-     WHERE payment.amount <= 100
-)
-UNION ALL
-(
-     SELECT payment.payment_id AS "payment.payment_id",
-          payment.amount AS "payment.amount"
-     FROM dvds.payment
-     WHERE payment.amount >= 200
-)
-ORDER BY "payment.payment_id" ASC, "payment.amount" DESC
-LIMIT 10
-OFFSET 20;
-`
 	query := UNION_ALL(
 		Payment.
 			SELECT(Payment.PaymentID.AS("payment.payment_id"), Payment.Amount).
@@ -1255,33 +628,19 @@ OFFSET 20;
 		LIMIT(10).
 		OFFSET(20)
 
-	fmt.Println(query.DebugSql())
-
-	testutils.AssertDebugStatementSql(t, query, expectedQuery, float64(100), float64(200), int64(10), int64(20))
-
 	dest := []model.Payment{}
 
-	err := query.Query(db, &dest)
-
-	require.NoError(t, err)
-	require.Equal(t, len(dest), 10)
-	testutils.AssertDeepEqual(t, dest[0], model.Payment{
-		PaymentID: 17523,
-		Amount:    4.99,
-	})
-	testutils.AssertDeepEqual(t, dest[1], model.Payment{
-		PaymentID: 17524,
-		Amount:    0.99,
-	})
-	testutils.AssertDeepEqual(t, dest[9], model.Payment{
-		PaymentID: 17532,
-		Amount:    8.99,
-	})
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
+	require.NoError(t, query.Query(db, &dest))
+	require.Len(t, dest, testparrot.RecordNext(t, len(dest)).(int))
+	require.EqualValues(t, testparrot.RecordNext(t, dest[0:2]), dest[0:2])
 }
 
 func TestAllSetOperators(t *testing.T) {
-	var select1 = Payment.SELECT(Payment.AllColumns).WHERE(Payment.PaymentID.GT_EQ(Int(17600)).AND(Payment.PaymentID.LT(Int(17610))))
-	var select2 = Payment.SELECT(Payment.AllColumns).WHERE(Payment.PaymentID.GT_EQ(Int(17620)).AND(Payment.PaymentID.LT(Int(17630))))
+	var select1 = Payment.SELECT(Payment.AllColumns).
+		WHERE(Payment.PaymentID.GT_EQ(Int(17600)).AND(Payment.PaymentID.LT(Int(17610))))
+	var select2 = Payment.SELECT(Payment.AllColumns).
+		WHERE(Payment.PaymentID.GT_EQ(Int(17620)).AND(Payment.PaymentID.LT(Int(17630))))
 
 	t.Run("UNION", func(t *testing.T) {
 		query := select1.UNION(select2)
@@ -1290,7 +649,7 @@ func TestAllSetOperators(t *testing.T) {
 		err := query.Query(db, &dest)
 
 		require.NoError(t, err)
-		require.Equal(t, len(dest), 20)
+		require.Len(t, dest, testparrot.RecordNext(t, len(dest)).(int))
 	})
 
 	t.Run("UNION_ALL", func(t *testing.T) {
@@ -1300,7 +659,7 @@ func TestAllSetOperators(t *testing.T) {
 		err := query.Query(db, &dest)
 
 		require.NoError(t, err)
-		require.Equal(t, len(dest), 20)
+		require.Len(t, dest, testparrot.RecordNext(t, len(dest)).(int))
 	})
 
 	t.Run("INTERSECT", func(t *testing.T) {
@@ -1310,7 +669,7 @@ func TestAllSetOperators(t *testing.T) {
 		err := query.Query(db, &dest)
 
 		require.NoError(t, err)
-		require.Equal(t, len(dest), 0)
+		require.Len(t, dest, testparrot.RecordNext(t, len(dest)).(int))
 	})
 
 	t.Run("INTERSECT_ALL", func(t *testing.T) {
@@ -1320,7 +679,7 @@ func TestAllSetOperators(t *testing.T) {
 		err := query.Query(db, &dest)
 
 		require.NoError(t, err)
-		require.Equal(t, len(dest), 0)
+		require.Len(t, dest, testparrot.RecordNext(t, len(dest)).(int))
 	})
 
 	t.Run("EXCEPT", func(t *testing.T) {
@@ -1330,7 +689,7 @@ func TestAllSetOperators(t *testing.T) {
 		err := query.Query(db, &dest)
 
 		require.NoError(t, err)
-		require.Equal(t, len(dest), 10)
+		require.Len(t, dest, testparrot.RecordNext(t, len(dest)).(int))
 	})
 
 	t.Run("EXCEPT_ALL", func(t *testing.T) {
@@ -1340,17 +699,11 @@ func TestAllSetOperators(t *testing.T) {
 		err := query.Query(db, &dest)
 
 		require.NoError(t, err)
-		require.Equal(t, len(dest), 10)
+		require.Len(t, dest, testparrot.RecordNext(t, len(dest)).(int))
 	})
 }
 
 func TestSelectWithCase(t *testing.T) {
-	expectedQuery := `
-SELECT (CASE payment.staff_id WHEN 1 THEN 'ONE' WHEN 2 THEN 'TWO' WHEN 3 THEN 'THREE' ELSE 'OTHER' END) AS "staff_id_num"
-FROM dvds.payment
-ORDER BY payment.payment_id ASC
-LIMIT 20;
-`
 	query := Payment.SELECT(
 		CASE(Payment.StaffID).
 			WHEN(Int(1)).THEN(String("ONE")).
@@ -1361,43 +714,32 @@ LIMIT 20;
 		ORDER_BY(Payment.PaymentID.ASC()).
 		LIMIT(20)
 
-	testutils.AssertDebugStatementSql(t, query, expectedQuery, int64(1), "ONE", int64(2), "TWO", int64(3), "THREE", "OTHER", int64(20))
+	dest := []struct{ StaffIDNum string }{}
 
-	dest := []struct {
-		StaffIDNum string
-	}{}
-
-	err := query.Query(db, &dest)
-
-	require.NoError(t, err)
-	require.Equal(t, len(dest), 20)
-	require.Equal(t, dest[0].StaffIDNum, "TWO")
-	require.Equal(t, dest[1].StaffIDNum, "ONE")
-}
-
-func getRowLockTestData() map[RowLock]string {
-	return map[RowLock]string{
-		UPDATE():        "UPDATE",
-		NO_KEY_UPDATE(): "NO KEY UPDATE",
-		SHARE():         "SHARE",
-		KEY_SHARE():     "KEY SHARE",
-	}
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
+	require.NoError(t, query.Query(db, &dest))
+	require.Len(t, dest, testparrot.RecordNext(t, len(dest)).(int))
+	require.EqualValues(t, testparrot.RecordNext(t, dest[0:2]), dest[0:2])
 }
 
 func TestRowLock(t *testing.T) {
-	expectedSQL := `
-SELECT *
-FROM dvds.address
-LIMIT 3
-FOR`
 	query := Address.
 		SELECT(STAR).
 		LIMIT(3)
 
-	for lockType, lockTypeStr := range getRowLockTestData() {
+	getLockTypes := func() []RowLock {
+		return []RowLock{
+			UPDATE(),
+			NO_KEY_UPDATE(),
+			SHARE(),
+			KEY_SHARE(),
+		}
+	}
+
+	for _, lockType := range getLockTypes() {
 		query.FOR(lockType)
 
-		testutils.AssertDebugStatementSql(t, query, expectedSQL+" "+lockTypeStr+";\n", int64(3))
+		require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
 
 		tx, _ := db.Begin()
 
@@ -1410,10 +752,10 @@ FOR`
 		require.NoError(t, err)
 	}
 
-	for lockType, lockTypeStr := range getRowLockTestData() {
+	for _, lockType := range getLockTypes() {
 		query.FOR(lockType.NOWAIT())
 
-		testutils.AssertDebugStatementSql(t, query, expectedSQL+" "+lockTypeStr+" NOWAIT;\n", int64(3))
+		require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
 
 		tx, _ := db.Begin()
 
@@ -1426,10 +768,10 @@ FOR`
 		require.NoError(t, err)
 	}
 
-	for lockType, lockTypeStr := range getRowLockTestData() {
+	for _, lockType := range getLockTypes() {
 		query.FOR(lockType.SKIP_LOCKED())
 
-		testutils.AssertDebugStatementSql(t, query, expectedSQL+" "+lockTypeStr+" SKIP LOCKED;\n", int64(3))
+		require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
 
 		tx, _ := db.Begin()
 
@@ -1444,42 +786,7 @@ FOR`
 }
 
 func TestQuickStart(t *testing.T) {
-
-	var expectedSQL = `
-SELECT actor.actor_id AS "actor.actor_id",
-     actor.first_name AS "actor.first_name",
-     actor.last_name AS "actor.last_name",
-     actor.last_update AS "actor.last_update",
-     film.film_id AS "film.film_id",
-     film.title AS "film.title",
-     film.description AS "film.description",
-     film.release_year AS "film.release_year",
-     film.language_id AS "film.language_id",
-     film.rental_duration AS "film.rental_duration",
-     film.rental_rate AS "film.rental_rate",
-     film.length AS "film.length",
-     film.replacement_cost AS "film.replacement_cost",
-     film.rating AS "film.rating",
-     film.last_update AS "film.last_update",
-     film.special_features AS "film.special_features",
-     film.fulltext AS "film.fulltext",
-     language.language_id AS "language.language_id",
-     language.name AS "language.name",
-     language.last_update AS "language.last_update",
-     category.category_id AS "category.category_id",
-     category.name AS "category.name",
-     category.last_update AS "category.last_update"
-FROM dvds.actor
-     INNER JOIN dvds.film_actor ON (actor.actor_id = film_actor.actor_id)
-     INNER JOIN dvds.film ON (film.film_id = film_actor.film_id)
-     INNER JOIN dvds.language ON (language.language_id = film.language_id)
-     INNER JOIN dvds.film_category ON (film_category.film_id = film.film_id)
-     INNER JOIN dvds.category ON (category.category_id = film_category.category_id)
-WHERE ((language.name = 'English') AND (category.name != 'Action')) AND (film.length > 180)
-ORDER BY actor.actor_id ASC, film.film_id ASC;
-`
-
-	stmt := SELECT(
+	query := SELECT(
 		Actor.ActorID, Actor.FirstName, Actor.LastName, Actor.LastUpdate, // list of all actor columns (equivalent to Actor.AllColumns)
 		Film.AllColumns, // list of all film columns (equivalent to Film.FilmID, Film.Title, ...)
 		Language.AllColumns,
@@ -1500,9 +807,9 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 		Film.FilmID.ASC(),
 	)
 
-	testutils.AssertDebugStatementSql(t, stmt, expectedSQL, "English", "Action", int64(180))
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
 
-	var dest []struct {
+	dest := []struct {
 		model.Actor
 
 		Films []struct {
@@ -1512,30 +819,23 @@ ORDER BY actor.actor_id ASC, film.film_id ASC;
 
 			Categories []model.Category
 		}
-	}
+	}{}
 
-	err := stmt.Query(db, &dest)
-	require.NoError(t, err)
+	require.NoError(t, query.Query(db, &dest))
+	require.EqualValues(t, testparrot.RecordNext(t, dest[0:2]), dest[0:2])
 
-	//jsonSave("./testdata/quick-start-dest.json", dest)
-	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/quick-start-dest.json")
-
-	var dest2 []struct {
+	dest2 := []struct {
 		model.Category
 
 		Films  []model.Film
 		Actors []model.Actor
-	}
+	}{}
 
-	err = stmt.Query(db, &dest2)
-	require.NoError(t, err)
-
-	//jsonSave("./testdata/quick-start-dest2.json", dest2)
-	testutils.AssertJSONFile(t, dest2, "./testdata/results/postgres/quick-start-dest2.json")
+	require.NoError(t, query.Query(db, &dest2))
+	require.EqualValues(t, testparrot.RecordNext(t, dest2[0:2]), dest2[0:2])
 }
 
 func TestQuickStartWithSubQueries(t *testing.T) {
-
 	filmLogerThan180 := Film.
 		SELECT(Film.AllColumns).
 		WHERE(Film.Length.GT(Int(180))).
@@ -1551,7 +851,7 @@ func TestQuickStartWithSubQueries(t *testing.T) {
 
 	categoryID := Category.CategoryID.From(categoriesNotAction)
 
-	stmt := Actor.
+	query := Actor.
 		INNER_JOIN(FilmActor, Actor.ActorID.EQ(FilmActor.ActorID)).
 		INNER_JOIN(filmLogerThan180, filmID.EQ(FilmActor.FilmID)).
 		INNER_JOIN(Language, Language.LanguageID.EQ(filmLanguageID)).
@@ -1567,7 +867,7 @@ func TestQuickStartWithSubQueries(t *testing.T) {
 		filmID.ASC(),
 	)
 
-	var dest []struct {
+	dest := []struct {
 		model.Actor
 
 		Films []struct {
@@ -1577,26 +877,20 @@ func TestQuickStartWithSubQueries(t *testing.T) {
 
 			Categories []model.Category
 		}
-	}
+	}{}
 
-	err := stmt.Query(db, &dest)
-	require.NoError(t, err)
+	require.NoError(t, query.Query(db, &dest))
+	require.EqualValues(t, testparrot.RecordNext(t, dest[0:2]), dest[0:2])
 
-	//jsonSave("./testdata/quick-start-dest.json", dest)
-	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/quick-start-dest.json")
-
-	var dest2 []struct {
+	dest2 := []struct {
 		model.Category
 
 		Films  []model.Film
 		Actors []model.Actor
-	}
+	}{}
 
-	err = stmt.Query(db, &dest2)
-	require.NoError(t, err)
-
-	//jsonSave("./testdata/quick-start-dest2.json", dest2)
-	testutils.AssertJSONFile(t, dest2, "./testdata/results/postgres/quick-start-dest2.json")
+	require.NoError(t, query.Query(db, &dest2))
+	require.EqualValues(t, testparrot.RecordNext(t, dest2[0:2]), dest2[0:2])
 }
 
 func TestExpressionWrappers(t *testing.T) {
@@ -1610,56 +904,17 @@ func TestExpressionWrappers(t *testing.T) {
 		TimestampExp(Raw("'raw'")),
 		TimestampzExp(Raw("'raw'")),
 		DateExp(Raw("'date'")),
+		JSONExp(Raw(`'{"key": "value"}'`)),
+		JSONBExp(Raw(`'{"key": "value"}'`)),
 	)
 
-	testutils.AssertStatementSql(t, query, `
-SELECT true,
-     11,
-     11.22,
-     'stringer',
-     'raw',
-     'raw',
-     'raw',
-     'raw',
-     'date';
-`)
-
 	dest := []struct{}{}
-	err := query.Query(db, &dest)
-	require.NoError(t, err)
+
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
+	require.NoError(t, query.Query(db, &dest))
 }
 
 func TestWindowFunction(t *testing.T) {
-	var expectedSQL = `
-SELECT AVG(payment.amount) OVER (),
-     AVG(payment.amount) OVER (PARTITION BY payment.customer_id),
-     MAX(payment.amount) OVER (ORDER BY payment.payment_date DESC),
-     MIN(payment.amount) OVER (PARTITION BY payment.customer_id ORDER BY payment.payment_date DESC),
-     SUM(payment.amount) OVER (PARTITION BY payment.customer_id ORDER BY payment.payment_date DESC ROWS BETWEEN 1 PRECEDING AND 6 FOLLOWING),
-     SUM(payment.amount) OVER (PARTITION BY payment.customer_id ORDER BY payment.payment_date DESC RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING),
-     MAX(payment.customer_id) OVER (ORDER BY payment.payment_date DESC ROWS BETWEEN CURRENT ROW AND UNBOUNDED FOLLOWING),
-     MIN(payment.customer_id) OVER (PARTITION BY payment.customer_id ORDER BY payment.payment_date DESC),
-     SUM(payment.customer_id) OVER (PARTITION BY payment.customer_id ORDER BY payment.payment_date DESC),
-     ROW_NUMBER() OVER (ORDER BY payment.payment_date),
-     RANK() OVER (ORDER BY payment.payment_date),
-     DENSE_RANK() OVER (ORDER BY payment.payment_date),
-     CUME_DIST() OVER (ORDER BY payment.payment_date),
-     NTILE(11) OVER (ORDER BY payment.payment_date),
-     LAG(payment.amount) OVER (ORDER BY payment.payment_date),
-     LAG(payment.amount) OVER (ORDER BY payment.payment_date),
-     LAG(payment.amount, 2, payment.amount) OVER (ORDER BY payment.payment_date),
-     LAG(payment.amount, 2, $1) OVER (ORDER BY payment.payment_date),
-     LEAD(payment.amount) OVER (ORDER BY payment.payment_date),
-     LEAD(payment.amount) OVER (ORDER BY payment.payment_date),
-     LEAD(payment.amount, 2, payment.amount) OVER (ORDER BY payment.payment_date),
-     LEAD(payment.amount, 2, $2) OVER (ORDER BY payment.payment_date),
-     FIRST_VALUE(payment.amount) OVER (ORDER BY payment.payment_date),
-     LAST_VALUE(payment.amount) OVER (ORDER BY payment.payment_date),
-     NTH_VALUE(payment.amount, 3) OVER (ORDER BY payment.payment_date)
-FROM dvds.payment
-WHERE payment.payment_id < $3
-GROUP BY payment.amount, payment.customer_id, payment.payment_date;
-`
 	query := Payment.
 		SELECT(
 			AVG(Payment.Amount).OVER(),
@@ -1692,26 +947,13 @@ GROUP BY payment.amount, payment.customer_id, payment.payment_date;
 		).GROUP_BY(Payment.Amount, Payment.CustomerID, Payment.PaymentDate).
 		WHERE(Payment.PaymentID.LT(Int(10)))
 
-	//fmt.Println(query.Sql())
-
-	testutils.AssertStatementSql(t, query, expectedSQL, 100, 100, int64(10))
-
 	dest := []struct{}{}
-	err := query.Query(db, &dest)
-	require.NoError(t, err)
+
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
+	require.NoError(t, query.Query(db, &dest))
 }
 
 func TestWindowClause(t *testing.T) {
-	var expectedSQL = `
-SELECT AVG(payment.amount) OVER (),
-     AVG(payment.amount) OVER (w1),
-     AVG(payment.amount) OVER (w2 ORDER BY payment.customer_id RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING),
-     AVG(payment.amount) OVER (w3 RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING)
-FROM dvds.payment
-WHERE payment.payment_id < $1
-WINDOW w1 AS (PARTITION BY payment.payment_date), w2 AS (w1), w3 AS (w2 ORDER BY payment.customer_id)
-ORDER BY payment.customer_id;
-`
 	query := Payment.SELECT(
 		AVG(Payment.Amount).OVER(),
 		AVG(Payment.Amount).OVER(Window("w1")),
@@ -1728,48 +970,32 @@ ORDER BY payment.customer_id;
 		WINDOW("w3").AS(Window("w2").ORDER_BY(Payment.CustomerID)).
 		ORDER_BY(Payment.CustomerID)
 
+	dest := []struct{}{}
 	//fmt.Println(query.Sql())
 
-	testutils.AssertStatementSql(t, query, expectedSQL, int64(10))
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
+	require.NoError(t, query.Query(db, &dest))
+}
 
-	dest := []struct{}{}
-	err := query.Query(db, &dest)
-
-	require.NoError(t, err)
+type ActorInfo struct {
+	ActorID   int
+	FirstName string
+	LastName  string
+	FilmInfo  string
 }
 
 func TestSimpleView(t *testing.T) {
-
 	query := SELECT(
 		view.ActorInfo.AllColumns,
-	).
-		FROM(view.ActorInfo).
+	).FROM(view.ActorInfo).
 		ORDER_BY(view.ActorInfo.ActorID).
 		LIMIT(10)
 
-	type ActorInfo struct {
-		ActorID   int
-		FirstName string
-		LastName  string
-		FilmInfo  string
-	}
+	dest := []ActorInfo{}
 
-	var dest []ActorInfo
-
-	err := query.Query(db, &dest)
-	require.NoError(t, err)
-
-	testutils.AssertJSON(t, dest[1:2], `
-[
-	{
-		"ActorID": 2,
-		"FirstName": "Nick",
-		"LastName": "Wahlberg",
-		"FilmInfo": "Action: Bull Shawshank, Animation: Fight Jawbreaker, Children: Jersey Sassy, Classics: Dracula Crystal, Gilbert Pelican, Comedy: Mallrats United, Rushmore Mermaid, Documentary: Adaptation Holes, Drama: Wardrobe Phantom, Family: Apache Divine, Chisum Behavior, Indian Love, Maguire Apache, Foreign: Baby Hall, Happiness United, Games: Roof Champion, Music: Lucky Flying, New: Destiny Saturday, Flash Wars, Jekyll Frogmen, Mask Peach, Sci-Fi: Chainsaw Uptown, Goodfellas Salute, Travel: Liaisons Sweet, Smile Earring"
-	}
-]
-`)
-
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
+	require.NoError(t, query.Query(db, &dest))
+	require.EqualValues(t, testparrot.RecordNext(t, dest[0:2]), dest[0:2])
 }
 
 func TestJoinViewWithTable(t *testing.T) {
@@ -1783,32 +1009,26 @@ func TestJoinViewWithTable(t *testing.T) {
 		ORDER_BY(view.CustomerList.ID).
 		WHERE(view.CustomerList.ID.LT_EQ(Int(2)))
 
-	var dest []struct {
+	dest := []struct {
 		model.CustomerList `sql:"primary_key=ID"`
 		Rentals            []model.Rental
-	}
+	}{}
 
-	fmt.Println(query.DebugSql())
-
-	err := query.Query(db, &dest)
-	require.NoError(t, err)
-
-	require.Equal(t, len(dest), 2)
-	require.Equal(t, len(dest[0].Rentals), 32)
-	require.Equal(t, len(dest[1].Rentals), 27)
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
+	require.NoError(t, query.Query(db, &dest))
+	require.Len(t, dest, testparrot.RecordNext(t, len(dest)).(int))
+	require.Len(t, dest[0].Rentals, testparrot.RecordNext(t, len(dest[0].Rentals)).(int))
+	require.Len(t, dest[1].Rentals, testparrot.RecordNext(t, len(dest[1].Rentals)).(int))
 }
 
 func TestDynamicProjectionList(t *testing.T) {
-
-	var request struct {
+	request := struct {
 		ColumnsToSelect []string
 		ShowFullName    bool
+	}{
+		ColumnsToSelect: []string{"customer_id", "create_date"},
+		ShowFullName:    true,
 	}
-
-	request.ColumnsToSelect = []string{"customer_id", "create_date"}
-	request.ShowFullName = true
-
-	// ...
 
 	projectionList := ProjectionList{}
 
@@ -1828,34 +1048,26 @@ func TestDynamicProjectionList(t *testing.T) {
 		projectionList = append(projectionList, Customer.FirstName.CONCAT(Customer.LastName))
 	}
 
-	stmt := SELECT(projectionList).
+	query := SELECT(projectionList).
 		FROM(Customer).
 		LIMIT(3)
 
-	testutils.AssertDebugStatementSql(t, stmt, `
-SELECT customer.customer_id AS "customer.customer_id",
-     customer.create_date AS "customer.create_date"
-FROM dvds.customer
-LIMIT 3;
-`)
-	var dest []model.Customer
-	err := stmt.Query(db, &dest)
-	require.NoError(t, err)
+	dest := []model.Customer{}
 
-	require.Equal(t, len(dest), 3)
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
+	require.NoError(t, query.Query(db, &dest))
+	require.Len(t, dest, testparrot.RecordNext(t, len(dest)).(int))
 }
 
 func TestDynamicCondition(t *testing.T) {
-	var request struct {
+	request := struct {
 		CustomerID *int64
 		Email      *string
 		Active     *bool
+	}{
+		CustomerID: testutils.Ptr(int64(1)).(*int64),
+		Active:     testutils.Ptr(true).(*bool),
 	}
-
-	request.CustomerID = testutils.Int64Ptr(1)
-	request.Active = testutils.BoolPtr(true)
-
-	// ...
 
 	condition := Bool(true)
 
@@ -1869,28 +1081,13 @@ func TestDynamicCondition(t *testing.T) {
 		condition = condition.AND(Customer.Activebool.EQ(Bool(*request.Active)))
 	}
 
-	stmt := SELECT(Customer.AllColumns).
+	query := SELECT(Customer.AllColumns).
 		FROM(Customer).
 		WHERE(condition)
 
-	testutils.AssertStatementSql(t, stmt, `
-SELECT customer.customer_id AS "customer.customer_id",
-     customer.store_id AS "customer.store_id",
-     customer.first_name AS "customer.first_name",
-     customer.last_name AS "customer.last_name",
-     customer.email AS "customer.email",
-     customer.address_id AS "customer.address_id",
-     customer.activebool AS "customer.activebool",
-     customer.create_date AS "customer.create_date",
-     customer.last_update AS "customer.last_update",
-     customer.active AS "customer.active"
-FROM dvds.customer
-WHERE ($1 AND (customer.customer_id = $2)) AND (customer.activebool = $3);
-`, true, int64(1), true)
-
 	dest := []model.Customer{}
-	err := stmt.Query(db, &dest)
-	require.NoError(t, err)
-	require.Len(t, dest, 1)
-	testutils.AssertDeepEqual(t, dest[0], customer0)
+
+	require.Equal(t, testparrot.RecordNext(t, query.String()), query.String())
+	require.NoError(t, query.Query(db, &dest))
+	require.Len(t, dest, testparrot.RecordNext(t, len(dest)).(int))
 }

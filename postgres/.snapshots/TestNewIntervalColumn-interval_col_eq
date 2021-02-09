@@ -1,0 +1,2 @@
+(sub_query.col_interval = INTERVAL '2 HOUR 10 MINUTE')
+([]interface {}) <nil>

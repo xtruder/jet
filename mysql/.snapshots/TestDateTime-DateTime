@@ -1,0 +1,4 @@
+CAST(? AS DATETIME)
+([]interface {}) (len=1) {
+  (string) (len=19) "2010-03-30 10:15:30"
+}

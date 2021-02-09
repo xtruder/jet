@@ -1,0 +1,3 @@
+
+ON CONFLICT (col_bool) DO NOTHING
+([]interface {}) <nil>

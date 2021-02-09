@@ -1,0 +1,8 @@
+
+SELECT table2.col_int AS "table2.col_int"
+FROM db.table2
+LIMIT ?;
+
+([]interface {}) (len=1) {
+  (int64) 10
+}

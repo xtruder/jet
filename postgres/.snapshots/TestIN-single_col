@@ -1,0 +1,7 @@
+($1 IN ((
+     SELECT table1.col1 AS "table1.col1"
+     FROM db.table1
+)))
+([]interface {}) (len=1) {
+  (float64) 1.11
+}

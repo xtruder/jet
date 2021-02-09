@@ -1,8 +1,9 @@
 package postgres
 
 import (
-	"github.com/go-jet/jet/v2/internal/jet"
 	"math"
+
+	"github.com/go-jet/jet/v2/internal/jet"
 )
 
 // RowLock is interface for SELECT statement row lock types

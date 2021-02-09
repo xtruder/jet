@@ -1,0 +1,4 @@
+JSON_REMOVE(table2.col_json, ?)
+([]interface {}) (len=1) {
+  (string) (len=4) "$.id"
+}

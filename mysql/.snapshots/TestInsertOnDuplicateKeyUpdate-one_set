@@ -1,0 +1,9 @@
+
+INSERT INTO db.table1 (col1, col_float)
+VALUES (DEFAULT, ?)
+ON DUPLICATE KEY UPDATE col_float = ?;
+
+([]interface {}) (len=2) {
+  (string) (len=3) "two",
+  (float64) 11.1
+}

@@ -1,0 +1,5 @@
+JSON_ARRAY_INSERT(table2.col_json, ?, ?)
+([]interface {}) (len=2) {
+  (string) (len=4) "$.id",
+  (string) (len=15) "[\"val1\",\"val2\"]"
+}

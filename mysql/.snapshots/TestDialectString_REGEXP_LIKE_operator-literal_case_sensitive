@@ -1,0 +1,4 @@
+(CAST(table3.col2 AS BINARY) REGEXP BINARY ?)
+([]interface {}) (len=1) {
+  (string) (len=4) "JOHN"
+}

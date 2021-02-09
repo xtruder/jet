@@ -1,0 +1,4 @@
+(table3.col2 ~ $1)
+([]interface {}) (len=1) {
+  (string) (len=4) "JOHN"
+}

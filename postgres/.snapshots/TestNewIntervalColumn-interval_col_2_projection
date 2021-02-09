@@ -1,0 +1,2 @@
+sub_query."table1.col_interval" AS "table1.col_interval"
+([]interface {}) <nil>

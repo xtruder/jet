@@ -1,68 +1,93 @@
+//go:generate go run ./init --import=false
+//go:generate go test -v ./ -testparrot.record -testparrot.splitfiles
 package mysql
 
 import (
 	"context"
 	"database/sql"
 	"flag"
-	jetmysql "github.com/go-jet/jet/v2/mysql"
-	"github.com/go-jet/jet/v2/postgres"
-	"github.com/go-jet/jet/v2/tests/dbconfig"
-	"github.com/stretchr/testify/require"
 	"math/rand"
 	"time"
 
+	"github.com/go-jet/jet/v2/internal/utils"
+	mysqlutils "github.com/go-jet/jet/v2/internal/utils/mysql"
+	jetmysql "github.com/go-jet/jet/v2/mysql"
+	"github.com/go-jet/jet/v2/postgres"
+	"github.com/stretchr/testify/require"
+	"github.com/xtruder/go-testparrot"
+
 	_ "github.com/go-sql-driver/mysql"
 
-	"github.com/pkg/profile"
 	"os"
 	"testing"
+
+	"github.com/pkg/profile"
 )
 
-var db *sql.DB
+var (
+	db *sql.DB
 
-var source string
+	dbHost     string
+	dbPort     int
+	dbUser     string
+	dbPassword string
+	dbName     string
 
-const MariaDB = "MariaDB"
+	loggedSQL      string
+	loggedSQLArgs  []interface{}
+	loggedDebugSQL string
+)
 
 func init() {
-	flag.StringVar(&source, "source", "", "MySQL or MariaDB")
-	flag.Parse()
-}
-
-func sourceIsMariaDB() bool {
-	return source == MariaDB
+	jetmysql.SetLogger(func(ctx context.Context, statement jetmysql.PrintableStatement) {
+		loggedSQL, loggedSQLArgs = statement.Sql()
+		loggedDebugSQL = statement.String()
+		//fmt.Println(statement.String())
+	})
 }
 
 func TestMain(m *testing.M) {
+	flag.StringVar(&dbHost, "mysql-host", "localhost", "mysql host")
+	flag.IntVar(&dbPort, "mysql-port", 3306, "mysql port")
+	flag.StringVar(&dbUser, "mysql-user", "jet", "mysql user")
+	flag.StringVar(&dbPassword, "mysql-password", "jet", "mysql password")
+	flag.StringVar(&dbName, "mysql-db", "dvds", "mysql database")
+
+	testparrot.BeforeTests(testparrot.R)
+
+	utils.ParseEnv("")
+
 	rand.Seed(time.Now().Unix())
 	defer profile.Start().Stop()
 
+	mysqlConnOpts := mysqlutils.ConnOptions{
+		Host:     dbHost,
+		Port:     dbPort,
+		User:     dbUser,
+		Password: dbPassword,
+		DBName:   dbName,
+	}
+
 	var err error
-	db, err = sql.Open("mysql", dbconfig.MySQLConnectionString)
+	db, err = mysqlutils.Connect(mysqlConnOpts)
 	if err != nil {
 		panic("Failed to connect to test db" + err.Error())
 	}
 	defer db.Close()
 
-	ret := m.Run()
+	code := m.Run()
 
-	os.Exit(ret)
-}
+	if code != 0 {
+		os.Exit(code)
+		return
+	}
 
-var loggedSQL string
-var loggedSQLArgs []interface{}
-var loggedDebugSQL string
-
-func init() {
-	jetmysql.SetLogger(func(ctx context.Context, statement jetmysql.PrintableStatement) {
-		loggedSQL, loggedSQLArgs = statement.Sql()
-		loggedDebugSQL = statement.DebugSql()
-	})
+	testparrot.AfterTests(testparrot.R, "")
 }
 
 func requireLogged(t *testing.T, statement postgres.Statement) {
 	query, args := statement.Sql()
 	require.Equal(t, loggedSQL, query)
 	require.Equal(t, loggedSQLArgs, args)
-	require.Equal(t, loggedDebugSQL, statement.DebugSql())
+	require.Equal(t, loggedDebugSQL, statement.String())
 }

@@ -1,15 +1,15 @@
 package postgres
 
 import (
-	"github.com/go-jet/jet/v2/internal/testutils"
-	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/northwind/model"
-	. "github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/northwind/table"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/go-jet/jet/v2/tests/postgres/gen/northwind/model"
+	. "github.com/go-jet/jet/v2/tests/postgres/gen/northwind/table"
+	"github.com/stretchr/testify/require"
+	"github.com/xtruder/go-testparrot"
 )
 
 func TestNorthwindJoinEverything(t *testing.T) {
-
 	stmt := Customers.
 		LEFT_JOIN(CustomerCustomerDemo, Customers.CustomerID.EQ(CustomerCustomerDemo.CustomerID)).
 		LEFT_JOIN(CustomerDemographics, CustomerCustomerDemo.CustomerTypeID.EQ(CustomerDemographics.CustomerTypeID)).
@@ -35,7 +35,7 @@ func TestNorthwindJoinEverything(t *testing.T) {
 		).
 		ORDER_BY(Customers.CustomerID, Orders.OrderID, Products.ProductID)
 
-	var dest []struct {
+	dest := []struct {
 		model.Customers
 
 		Demographics model.CustomerDemographics
@@ -56,12 +56,10 @@ func TestNorthwindJoinEverything(t *testing.T) {
 				}
 			}
 		}
-	}
+	}{}
 
-	err := stmt.Query(db, &dest)
-	require.NoError(t, err)
-
-	//jsonSave("./testdata/northwind-all.json", dest)
-	testutils.AssertJSONFile(t, dest, "./testdata/results/postgres/northwind-all.json")
-	requireLogged(t, stmt)
+	require.Equal(t, testparrot.RecordNext(t, stmt.String()), stmt.String())
+	require.NoError(t, stmt.Query(db, &dest))
+	require.EqualValues(t, testparrot.RecordNext(t, dest[0]), dest[0])
+	require.EqualValues(t, testparrot.RecordNext(t, dest[len(dest)-1]), dest[len(dest)-1])
 }

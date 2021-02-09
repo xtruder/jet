@@ -1,0 +1,4 @@
+$1::boolean
+([]interface {}) (len=1) {
+  (int64) 1
+}

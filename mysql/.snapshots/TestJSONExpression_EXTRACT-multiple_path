@@ -1,0 +1,5 @@
+JSON_EXTRACT(?, ?)
+([]interface {}) (len=2) {
+  (string) (len=4) "$[0]",
+  (string) (len=4) "$[1]"
+}

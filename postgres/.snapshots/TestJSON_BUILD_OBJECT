@@ -1,0 +1,4 @@
+json_build_object($1::text, table2.col_json)
+([]interface {}) (len=1) {
+  (string) (len=3) "key"
+}

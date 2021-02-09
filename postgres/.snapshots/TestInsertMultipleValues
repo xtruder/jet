@@ -1,0 +1,9 @@
+
+INSERT INTO db.table1 (col1, col_float, col_bool)
+VALUES ($1, $2, $3);
+
+([]interface {}) (len=3) {
+  (int) 1,
+  (int) 2,
+  (int) 3
+}

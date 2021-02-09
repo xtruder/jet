@@ -1,0 +1,7 @@
+
+DELETE FROM db.table1
+WHERE table1.col1 = ?;
+
+([]interface {}) (len=1) {
+  (int64) 1
+}

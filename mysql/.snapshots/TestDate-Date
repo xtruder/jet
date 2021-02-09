@@ -1,0 +1,4 @@
+CAST(? AS DATE)
+([]interface {}) (len=1) {
+  (string) (len=10) "2014-01-02"
+}

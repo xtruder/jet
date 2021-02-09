@@ -1,66 +1,79 @@
+//go:generate go run ./init --import=false
+//go:generate go test ./ -testparrot.record -testparrot.splitfiles
 package postgres
 
 import (
 	"context"
 	"database/sql"
-	"github.com/go-jet/jet/v2/postgres"
-	"github.com/go-jet/jet/v2/tests/dbconfig"
-	_ "github.com/lib/pq"
-	"github.com/pkg/profile"
-	"github.com/stretchr/testify/require"
+	"flag"
 	"math/rand"
 	"os"
-	"os/exec"
-	"strings"
 	"testing"
 	"time"
+
+	"github.com/go-jet/jet/v2/internal/utils"
+	postgresutils "github.com/go-jet/jet/v2/internal/utils/postgres"
+	"github.com/go-jet/jet/v2/postgres"
+	_ "github.com/lib/pq"
+	"github.com/pkg/profile"
+	"github.com/xtruder/go-testparrot"
 )
 
-var db *sql.DB
-var testRoot string
+var (
+	db *sql.DB
 
-func TestMain(m *testing.M) {
-	rand.Seed(time.Now().Unix())
-	defer profile.Start().Stop()
+	loggedSQL      string
+	loggedSQLArgs  []interface{}
+	loggedDebugSQL string
 
-	setTestRoot()
-
-	var err error
-	db, err = sql.Open("postgres", dbconfig.PostgresConnectString)
-	if err != nil {
-		panic("Failed to connect to test db")
-	}
-	defer db.Close()
-
-	ret := m.Run()
-
-	os.Exit(ret)
-}
-
-func setTestRoot() {
-	cmd := exec.Command("git", "rev-parse", "--show-toplevel")
-	byteArr, err := cmd.Output()
-	if err != nil {
-		panic(err)
-	}
-
-	testRoot = strings.TrimSpace(string(byteArr)) + "/tests/"
-}
-
-var loggedSQL string
-var loggedSQLArgs []interface{}
-var loggedDebugSQL string
+	dbHost     string
+	dbPort     int
+	dbUser     string
+	dbPassword string
+	dbName     string
+)
 
 func init() {
 	postgres.SetLogger(func(ctx context.Context, statement postgres.PrintableStatement) {
 		loggedSQL, loggedSQLArgs = statement.Sql()
-		loggedDebugSQL = statement.DebugSql()
+		loggedDebugSQL = statement.String()
 	})
 }
 
-func requireLogged(t *testing.T, statement postgres.Statement) {
-	query, args := statement.Sql()
-	require.Equal(t, loggedSQL, query)
-	require.Equal(t, loggedSQLArgs, args)
-	require.Equal(t, loggedDebugSQL, statement.DebugSql())
+func TestMain(m *testing.M) {
+	flag.StringVar(&dbHost, "postgres-host", "localhost", "postgres host")
+	flag.IntVar(&dbPort, "postgres-port", 5432, "postgres port")
+	flag.StringVar(&dbUser, "postgres-user", "jet", "postgres user")
+	flag.StringVar(&dbPassword, "postgres-password", "jet", "postgres password")
+	flag.StringVar(&dbName, "postgres-db", "jet", "postgres database")
+
+	testparrot.BeforeTests(testparrot.R)
+
+	utils.ParseEnv("")
+
+	rand.Seed(time.Now().Unix())
+	defer profile.Start().Stop()
+
+	postgresConnOpts := postgresutils.ConnOptions{
+		Host:     dbHost,
+		Port:     dbPort,
+		User:     dbUser,
+		Password: dbPassword,
+		DBName:   dbName,
+		Params:   "sslmode=disable",
+	}
+
+	var err error
+	db, err = postgresutils.Connect(postgresConnOpts)
+	utils.PanicOnError(err)
+	defer db.Close()
+
+	code := m.Run()
+
+	if code != 0 {
+		os.Exit(code)
+		return
+	}
+
+	testparrot.AfterTests(testparrot.R, "")
 }

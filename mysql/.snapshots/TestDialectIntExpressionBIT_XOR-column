@@ -1,0 +1,2 @@
+(table1.col_int ^ table2.col_int)
+([]interface {}) <nil>

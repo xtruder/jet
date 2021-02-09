@@ -1,0 +1,8 @@
+(ROW($1, table1.col1) NOT IN ((
+     SELECT table2.col3 AS "table2.col3",
+          table3.col1 AS "table3.col1"
+     FROM db.table2
+)))
+([]interface {}) (len=1) {
+  (int64) 12
+}

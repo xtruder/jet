@@ -1,0 +1,8 @@
+
+SELECT table3.col_int AS "table3.col_int"
+FROM db.table3
+HAVING table1.col_bool = $1;
+
+([]interface {}) (len=1) {
+  (bool) true
+}

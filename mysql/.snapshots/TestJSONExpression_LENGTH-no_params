@@ -1,0 +1,2 @@
+JSON_LENGTH(table2.col_json)
+([]interface {}) <nil>

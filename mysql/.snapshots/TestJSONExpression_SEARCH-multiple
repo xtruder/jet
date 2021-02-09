@@ -1,0 +1,7 @@
+JSON_SEARCH(table2.col_json, 'all', ?, ?, ?, ?)
+([]interface {}) (len=4) {
+  (string) (len=2) "10",
+  (string) "",
+  (string) (len=4) "$[1]",
+  (string) (len=4) "$[2]"
+}

@@ -2,25 +2,33 @@ package mysql
 
 import (
 	"testing"
+
+	"github.com/go-jet/jet/v2/internal/testutils"
 )
 
 func TestDeleteUnconditionally(t *testing.T) {
-	assertStatementSqlErr(t, table1.DELETE(), `jet: WHERE clause not set`)
-	assertStatementSqlErr(t, table1.DELETE().WHERE(nil), `jet: WHERE clause not set`)
+	testutils.StatementTests{
+		{
+			Name:   "panics without where",
+			Test:   table1.DELETE(),
+			Panics: `jet: WHERE clause not set`,
+		},
+		{
+			Name:   "panics nil where",
+			Test:   table1.DELETE().WHERE(nil),
+			Panics: `jet: WHERE clause not set`,
+		},
+	}.Run(t)
 }
 
 func TestDeleteWithWhere(t *testing.T) {
-	assertStatementSql(t, table1.DELETE().WHERE(table1Col1.EQ(Int(1))), `
-DELETE FROM db.table1
-WHERE table1.col1 = ?;
-`, int64(1))
+	testutils.StatementTest{
+		Test: table1.DELETE().WHERE(table1Col1.EQ(Int(1))),
+	}.Assert(t)
 }
 
 func TestDeleteWithWhereOrderByLimit(t *testing.T) {
-	assertStatementSql(t, table1.DELETE().WHERE(table1Col1.EQ(Int(1))).ORDER_BY(table1Col1).LIMIT(1), `
-DELETE FROM db.table1
-WHERE table1.col1 = ?
-ORDER BY table1.col1
-LIMIT ?;
-`, int64(1), int64(1))
+	testutils.StatementTest{
+		Test: table1.DELETE().WHERE(table1Col1.EQ(Int(1))).ORDER_BY(table1Col1).LIMIT(1),
+	}.Assert(t)
 }

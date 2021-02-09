@@ -1,0 +1,4 @@
+(table2.col_date - $1::time without time zone::interval)
+([]interface {}) (len=1) {
+  (string) (len=8) "20:11:10"
+}

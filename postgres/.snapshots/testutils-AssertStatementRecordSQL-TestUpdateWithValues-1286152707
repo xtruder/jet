@@ -1,0 +1,10 @@
+
+UPDATE db.table1
+SET (col_int, col_float) = ($1, $2)
+WHERE table1.col_int >= $3;
+
+([]interface {}) (len=3) {
+  (int) 1,
+  (float64) 22.2,
+  (int64) 33
+}

@@ -93,22 +93,26 @@ var table3 = NewTable(
 	table3StrCol)
 
 func assertSerialize(t *testing.T, serializer jet.Serializer, query string, args ...interface{}) {
+	t.Helper()
 	testutils.AssertSerialize(t, Dialect, serializer, query, args...)
 }
 
-func assertClauseSerialize(t *testing.T, clause jet.Clause, query string, args ...interface{}) {
-	testutils.AssertClauseSerialize(t, Dialect, clause, query, args...)
+func assertRecordSerialize(t *testing.T, serializer jet.Serializer) {
+	t.Helper()
+	testutils.AssertRecordSerialize(t, Dialect, serializer)
 }
 
 func assertSerializeErr(t *testing.T, serializer jet.Serializer, errString string) {
+	t.Helper()
 	testutils.AssertSerializeErr(t, Dialect, serializer, errString)
 }
 
 func assertProjectionSerialize(t *testing.T, projection jet.Projection, query string, args ...interface{}) {
+	t.Helper()
 	testutils.AssertProjectionSerialize(t, Dialect, projection, query, args...)
 }
 
 var assertStatementSql = testutils.AssertStatementSql
+var assertStatementRecordSQL = testutils.AssertStatementRecordSQL
 var assertDebugStatementSql = testutils.AssertDebugStatementSql
 var assertStatementSqlErr = testutils.AssertStatementSqlErr
-var assertPanicErr = testutils.AssertPanicErr

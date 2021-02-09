@@ -1,0 +1,4 @@
+CAST(? AS bigint)
+([]interface {}) (len=1) {
+  (float64) 11.22
+}

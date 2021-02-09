@@ -1,0 +1,4 @@
+INTERVAL ? MINUTE_MICROSECOND
+([]interface {}) (len=1) {
+  (string) (len=12) "15:08.000100"
+}

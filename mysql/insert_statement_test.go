@@ -1,28 +1,34 @@
 package mysql
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
+
+	"github.com/go-jet/jet/v2/internal/testutils"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestInvalidInsert(t *testing.T) {
-	assertStatementSqlErr(t, table1.INSERT(table1Col1), "jet: VALUES or QUERY has to be specified for INSERT statement")
-	assertStatementSqlErr(t, table1.INSERT(nil).VALUES(1), "jet: nil column in columns list")
+	testutils.StatementTests{
+		{
+			Name:   "panics without values or query",
+			Test:   table1.INSERT(table1Col1),
+			Panics: "jet: VALUES or QUERY has to be specified for INSERT statement",
+		},
+		{
+			Name:   "panics with nil columns",
+			Test:   table1.INSERT(nil).VALUES(1),
+			Panics: "jet: nil column in columns list",
+		},
+	}.Run(t)
 }
 
 func TestInsertNilValue(t *testing.T) {
-	assertStatementSql(t, table1.INSERT(table1Col1).VALUES(nil), `
-INSERT INTO db.table1 (col1)
-VALUES (?);
-`, nil)
+	testutils.StatementTest{Test: table1.INSERT(table1Col1).VALUES(nil)}.Assert(t)
 }
 
 func TestInsertSingleValue(t *testing.T) {
-	assertStatementSql(t, table1.INSERT(table1Col1).VALUES(1), `
-INSERT INTO db.table1 (col1)
-VALUES (?);
-`, int(1))
+	testutils.StatementTest{Test: table1.INSERT(table1Col1).VALUES(1)}.Assert(t)
 }
 
 func TestInsertWithColumnList(t *testing.T) {
@@ -30,26 +36,19 @@ func TestInsertWithColumnList(t *testing.T) {
 
 	columnList = append(columnList, table3StrCol)
 
-	assertStatementSql(t, table3.INSERT(columnList).VALUES(1, 3), `
-INSERT INTO db.table3 (col_int, col2)
-VALUES (?, ?);
-`, 1, 3)
+	testutils.StatementTest{Test: table3.INSERT(columnList).VALUES(1, 3)}.Assert(t)
 }
 
 func TestInsertDate(t *testing.T) {
 	date := time.Date(1999, 1, 2, 3, 4, 5, 0, time.UTC)
 
-	assertStatementSql(t, table1.INSERT(table1ColTimestamp).VALUES(date), `
-INSERT INTO db.table1 (col_timestamp)
-VALUES (?);
-`, date)
+	testutils.StatementTest{Test: table1.INSERT(table1ColTimestamp).VALUES(date)}.Assert(t)
 }
 
 func TestInsertMultipleValues(t *testing.T) {
-	assertStatementSql(t, table1.INSERT(table1Col1, table1ColFloat, table1Col3).VALUES(1, 2, 3), `
-INSERT INTO db.table1 (col1, col_float, col3)
-VALUES (?, ?, ?);
-`, 1, 2, 3)
+	testutils.StatementTest{
+		Test: table1.INSERT(table1Col1, table1ColFloat, table1Col3).VALUES(1, 2, 3),
+	}.Assert(t)
 }
 
 func TestInsertMultipleRows(t *testing.T) {
@@ -58,12 +57,7 @@ func TestInsertMultipleRows(t *testing.T) {
 		VALUES(11, 22).
 		VALUES(111, 222)
 
-	assertStatementSql(t, stmt, `
-INSERT INTO db.table1 (col1, col_float)
-VALUES (?, ?),
-       (?, ?),
-       (?, ?);
-`, 1, 2, 11, 22, 111, 222)
+	testutils.StatementTest{Test: stmt}.Assert(t)
 }
 
 func TestInsertValuesFromModel(t *testing.T) {
@@ -83,20 +77,10 @@ func TestInsertValuesFromModel(t *testing.T) {
 		MODEL(toInsert).
 		MODEL(&toInsert)
 
-	expectedSQL := `
-INSERT INTO db.table1 (col1, col_float)
-VALUES (?, ?),
-       (?, ?);
-`
-
-	assertStatementSql(t, stmt, expectedSQL, int(1), float64(1.11), int(1), float64(1.11))
+	testutils.StatementTest{Test: stmt}.Assert(t)
 }
 
 func TestInsertValuesFromModelColumnMismatch(t *testing.T) {
-	defer func() {
-		r := recover()
-		require.Equal(t, r, "missing struct field for column : col1")
-	}()
 	type Table1Model struct {
 		Col1Prim int
 		Col2     string
@@ -107,31 +91,24 @@ func TestInsertValuesFromModelColumnMismatch(t *testing.T) {
 		Col2:     "one",
 	}
 
-	table1.
-		INSERT(table1Col1, table1ColFloat).
-		MODEL(newData)
+	assert.PanicsWithValue(t, "missing struct field for column : col1", func() {
+		table1.
+			INSERT(table1Col1, table1ColFloat).
+			MODEL(newData)
+	})
 }
 
 func TestInsertFromNonStructModel(t *testing.T) {
-
-	defer func() {
-		r := recover()
-		require.Equal(t, r, "jet: data has to be a struct")
-	}()
-
-	table2.INSERT(table2ColInt).MODEL([]int{})
+	assert.PanicsWithValue(t, "jet: data has to be a struct", func() {
+		table2.INSERT(table2ColInt).MODEL([]int{})
+	})
 }
 
 func TestInsertDefaultValue(t *testing.T) {
 	stmt := table1.INSERT(table1Col1, table1ColFloat).
 		VALUES(DEFAULT, "two")
 
-	var expectedSQL = `
-INSERT INTO db.table1 (col1, col_float)
-VALUES (DEFAULT, ?);
-`
-
-	assertStatementSql(t, stmt, expectedSQL, "two")
+	testutils.StatementTest{Test: stmt}.Assert(t)
 }
 
 func TestInsertOnDuplicateKeyUpdate(t *testing.T) {
@@ -142,19 +119,12 @@ func TestInsertOnDuplicateKeyUpdate(t *testing.T) {
 
 	t.Run("empty list", func(t *testing.T) {
 		stmt := stmt().ON_DUPLICATE_KEY_UPDATE()
-		assertStatementSql(t, stmt, `
-INSERT INTO db.table1 (col1, col_float)
-VALUES (DEFAULT, ?);
-`, "two")
+		testutils.StatementTest{Test: stmt}.Assert(t)
 	})
 
 	t.Run("one set", func(t *testing.T) {
 		stmt := stmt().ON_DUPLICATE_KEY_UPDATE(table1ColFloat.SET(Float(11.1)))
-		assertStatementSql(t, stmt, `
-INSERT INTO db.table1 (col1, col_float)
-VALUES (DEFAULT, ?)
-ON DUPLICATE KEY UPDATE col_float = ?;
-`, "two", 11.1)
+		testutils.StatementTest{Test: stmt}.Assert(t)
 	})
 
 	t.Run("all types set", func(t *testing.T) {
@@ -167,16 +137,6 @@ ON DUPLICATE KEY UPDATE col_float = ?;
 			table1ColTimestamp.SET(Timestamp(2020, 1, 22, 3, 4, 5)),
 			table1ColDate.SET(Date(2020, 12, 1)),
 		)
-		assertStatementSql(t, stmt, `
-INSERT INTO db.table1 (col1, col_float)
-VALUES (DEFAULT, ?)
-ON DUPLICATE KEY UPDATE col_bool = ?,
-                        col_int = ?,
-                        col_float = ?,
-                        col_string = ?,
-                        col_time = CAST(? AS TIME),
-                        col_timestamp = TIMESTAMP(?),
-                        col_date = CAST(? AS DATE);
-`, "two", true, int64(11), 11.1, "str", "11:23:11", "2020-01-22 03:04:05", "2020-12-01")
+		testutils.StatementTest{Test: stmt}.Assert(t)
 	})
 }

@@ -1,0 +1,4 @@
+?
+([]interface {}) (len=1) {
+  (string) (len=9) "Some text"
+}

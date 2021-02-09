@@ -2,73 +2,62 @@ package postgres
 
 import (
 	"context"
-	"github.com/go-jet/jet/v2/internal/testutils"
-	. "github.com/go-jet/jet/v2/postgres"
-	"github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/test_sample/model"
-	. "github.com/go-jet/jet/v2/tests/.gentestdata/jetdb/test_sample/table"
-	"github.com/stretchr/testify/require"
 	"testing"
 	"time"
+
+	. "github.com/go-jet/jet/v2/postgres"
+	"github.com/go-jet/jet/v2/tests/postgres/gen/test_sample/model"
+	. "github.com/go-jet/jet/v2/tests/postgres/gen/test_sample/table"
+	"github.com/stretchr/testify/require"
+	"github.com/xtruder/go-testparrot"
 )
 
 func TestDeleteWithWhere(t *testing.T) {
 	initForDeleteTest(t)
 
-	var expectedSQL = `
-DELETE FROM test_sample.link
-WHERE link.name IN ('Gmail', 'Outlook');
-`
-	deleteStmt := Link.
+	stmt := Link.
 		DELETE().
 		WHERE(Link.Name.IN(String("Gmail"), String("Outlook")))
 
-	testutils.AssertDebugStatementSql(t, deleteStmt, expectedSQL, "Gmail", "Outlook")
-	AssertExec(t, deleteStmt, 2)
+	require.Equal(t, testparrot.RecordNext(t, stmt.String()), stmt.String())
+	assertExec(t, stmt, 2)
 }
 
 func TestDeleteWithWhereAndReturning(t *testing.T) {
 	initForDeleteTest(t)
 
-	var expectedSQL = `
-DELETE FROM test_sample.link
-WHERE link.name IN ('Gmail', 'Outlook')
-RETURNING link.id AS "link.id",
-          link.url AS "link.url",
-          link.name AS "link.name",
-          link.description AS "link.description";
-`
-	deleteStmt := Link.
+	stmt := Link.
 		DELETE().
 		WHERE(Link.Name.IN(String("Gmail"), String("Outlook"))).
 		RETURNING(Link.AllColumns)
 
-	testutils.AssertDebugStatementSql(t, deleteStmt, expectedSQL, "Gmail", "Outlook")
+	require.Equal(t, testparrot.RecordNext(t, stmt.String()), stmt.String())
 
 	dest := []model.Link{}
+	require.NoError(t, stmt.Query(db, &dest))
 
-	err := deleteStmt.Query(db, &dest)
+	// ID can change, so zero it out
+	for i := range dest {
+		dest[i].ID = 0
+	}
 
-	require.NoError(t, err)
-
-	require.Equal(t, len(dest), 2)
-	testutils.AssertDeepEqual(t, dest[0].Name, "Gmail")
-	testutils.AssertDeepEqual(t, dest[1].Name, "Outlook")
-	requireLogged(t, deleteStmt)
+	require.EqualValues(t, testparrot.RecordNext(t, dest), dest)
 }
 
 func initForDeleteTest(t *testing.T) {
 	cleanUpLinkTable(t)
+
 	stmt := Link.INSERT(Link.URL, Link.Name, Link.Description).
 		VALUES("www.gmail.com", "Gmail", "Email service developed by Google").
 		VALUES("www.outlook.live.com", "Outlook", "Email service developed by Microsoft")
 
-	AssertExec(t, stmt, 2)
+	assertExec(t, stmt, 2)
 }
 
 func TestDeleteQueryContext(t *testing.T) {
 	initForDeleteTest(t)
 
-	deleteStmt := Link.
+	stmt := Link.
 		DELETE().
 		WHERE(Link.Name.IN(String("Gmail"), String("Outlook")))
 
@@ -78,10 +67,10 @@ func TestDeleteQueryContext(t *testing.T) {
 	time.Sleep(10 * time.Millisecond)
 
 	dest := []model.Link{}
-	err := deleteStmt.QueryContext(ctx, db, &dest)
+	err := stmt.QueryContext(ctx, db, &dest)
 
+	require.Equal(t, testparrot.RecordNext(t, stmt.String()), stmt.String())
 	require.Error(t, err, "context deadline exceeded")
-	requireLogged(t, deleteStmt)
 }
 
 func TestDeleteExecContext(t *testing.T) {
@@ -89,7 +78,7 @@ func TestDeleteExecContext(t *testing.T) {
 
 	list := []Expression{String("Gmail"), String("Outlook")}
 
-	deleteStmt := Link.
+	stmt := Link.
 		DELETE().
 		WHERE(Link.Name.IN(list...))
 
@@ -98,8 +87,8 @@ func TestDeleteExecContext(t *testing.T) {
 
 	time.Sleep(10 * time.Millisecond)
 
-	_, err := deleteStmt.ExecContext(ctx, db)
+	_, err := stmt.ExecContext(ctx, db)
 
+	require.Equal(t, testparrot.RecordNext(t, stmt.String()), stmt.String())
 	require.Error(t, err, "context deadline exceeded")
-	requireLogged(t, deleteStmt)
 }

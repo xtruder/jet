@@ -1,0 +1,4 @@
+INTERVAL ? HOUR_MICROSECOND
+([]interface {}) (len=1) {
+  (string) (len=15) "03:04:05.006000"
+}

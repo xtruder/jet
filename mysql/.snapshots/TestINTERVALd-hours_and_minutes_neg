@@ -1,0 +1,4 @@
+INTERVAL ? HOUR_MINUTE
+([]interface {}) (len=1) {
+  (string) (len=6) "-11:22"
+}

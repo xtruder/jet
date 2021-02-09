@@ -1,0 +1,7 @@
+
+INSERT INTO db.table1 (col1)
+VALUES ($1);
+
+([]interface {}) (len=1) {
+  (interface {}) <nil>
+}

@@ -1,0 +1,4 @@
+(table3.col2 NOT REGEXP ?)
+([]interface {}) (len=1) {
+  (string) (len=4) "JOHN"
+}

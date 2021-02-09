@@ -1,0 +1,4 @@
+jsonb_build_array($1::text, table2.col_int)
+([]interface {}) (len=1) {
+  (string) (len=4) "val1"
+}

@@ -3,45 +3,57 @@ package mysql
 import (
 	"testing"
 	"time"
+
+	"github.com/go-jet/jet/v2/internal/testutils"
 )
 
 func TestBool(t *testing.T) {
-	assertSerialize(t, Bool(false), `?`, false)
+	testutils.SerializerTest{Test: Bool(false)}.Assert(t, Dialect)
 }
 
 func TestInt(t *testing.T) {
-	assertSerialize(t, Int(11), `?`, int64(11))
+	testutils.SerializerTest{Test: Int(1)}.Assert(t, Dialect)
 }
 
 func TestFloat(t *testing.T) {
-	assertSerialize(t, Float(12.34), `?`, float64(12.34))
+	testutils.SerializerTest{Test: Float(12.34)}.Assert(t, Dialect)
 }
 
 func TestString(t *testing.T) {
-	assertSerialize(t, String("Some text"), `?`, "Some text")
+	testutils.SerializerTest{Test: String("Some text")}.Assert(t, Dialect)
 }
 
 func TestDate(t *testing.T) {
-	assertSerialize(t, Date(2014, time.January, 2), `CAST(? AS DATE)`, "2014-01-02")
-	assertSerialize(t, DateT(time.Now()), `CAST(? AS DATE)`)
+	testutils.SerializerTests{
+		{Name: "Date", Test: Date(2014, time.January, 2)},
+		{Name: "DateT", Test: DateT(testutils.TimestampWithTimeZone("1999-01-08 13:05:06 +0100 CET", 0))},
+	}.Run(t, Dialect)
 }
 
 func TestTime(t *testing.T) {
-	assertSerialize(t, Time(10, 15, 30), `CAST(? AS TIME)`, "10:15:30")
-	assertSerialize(t, TimeT(time.Now()), `CAST(? AS TIME)`)
+	testutils.SerializerTests{
+		{Name: "Time", Test: Time(10, 15, 30)},
+		{Name: "TimeT", Test: TimeT(testutils.TimestampWithTimeZone("1999-01-08 13:05:06 +0100 CET", 0))},
+	}.Run(t, Dialect)
 }
 
 func TestDateTime(t *testing.T) {
-	assertSerialize(t, DateTime(2010, time.March, 30, 10, 15, 30), `CAST(? AS DATETIME)`, "2010-03-30 10:15:30")
-	assertSerialize(t, DateTimeT(time.Now()), `CAST(? AS DATETIME)`)
+	testutils.SerializerTests{
+		{Name: "DateTime", Test: DateTime(2010, time.March, 30, 10, 15, 30)},
+		{Name: "DateTimeT", Test: DateTimeT(testutils.TimestampWithTimeZone("1999-01-08 13:05:06 +0100 CET", 0))},
+	}.Run(t, Dialect)
 }
 
 func TestTimestamp(t *testing.T) {
-	assertSerialize(t, Timestamp(2010, time.March, 30, 10, 15, 30), `TIMESTAMP(?)`, "2010-03-30 10:15:30")
-	assertSerialize(t, TimestampT(time.Now()), `TIMESTAMP(?)`)
+	testutils.SerializerTests{
+		{Name: "Timestamp", Test: Timestamp(2010, time.March, 30, 10, 15, 30)},
+		{Name: "TimestampT", Test: TimestampT(testutils.TimestampWithTimeZone("1999-01-08 13:05:06 +0100 CET", 0))},
+	}.Run(t, Dialect)
 }
 
 func TestJSON(t *testing.T) {
-	assertSerialize(t, JSON(map[string]string{"key": "value"}), "?", `{"key":"value"}`)
-	assertSerialize(t, JSON("value"), "?", `"value"`)
+	testutils.SerializerTests{
+		{Name: "object", Test: JSON(map[string]string{"key": "value"})},
+		{Name: "string", Test: JSON("value")},
+	}.Run(t, Dialect)
 }
